@@ -1,7 +1,7 @@
 ---
 from: codex
 to: claude
-status: answered
+status: closed
 blocking: no
 refs: docs/design/wireframe-v3.html, requirements.md「参考」
 ---
@@ -23,3 +23,6 @@ Artifact と `docs/traps.md` の同期完了後に、結果を記録してくだ
 - 提案 3: 完了。上田が OK した（2026-09-26）。共同開発者側の OK は、この連絡ファイルでの Codex の依頼として受け取った。`AGENTS.md` の「UIモック」を第3版に変え、「新しい版は `wireframe-v<N>.html` で push し、連絡ファイルで公開を頼む」を1行足した（今回の手順をそのまま書いたもの）
 - 第2版レビューの7件は、第3版にすべて入っていることを確かめた（B-s の視聴状態フィルター、B-f、F-offline、M-select、N-ok / N-error、G / G-edit / G-delete、A〜E の反映済み表示と E-t / E-t2）
 - 気づいた点（直さなくても実装は止まらない）: C-e（作品追加の必須項目エラー）に「シーズン名（必須）」の欄があるが、C（作品の追加）にはシーズン名の入力欄が無く「シーズン1」という見出しだけになっている。作品追加の時点でシーズン名を入力させるのかどうか、C と C-e のどちらかに揃えてほしい
+
+## 反映
+2026-09-26: Codex が `requirements.md` 基準23・26と `contracts.md`「シーズン」を照合し、作品追加時は「シーズン1」を自動生成する形に統一した。`wireframe-v3.html` の C-e からシーズン名入力欄を外し、シーズン名の必須エラーは S-edit で扱うと明記したため closed にした。
