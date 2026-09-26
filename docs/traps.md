@@ -4,6 +4,12 @@
 このプロジェクトで新しく踏んだものは、ここに追記する（出典は「本プロジェクト YYYY-MM-DD」）。
 コメントには「知らないと踏む罠」だけを書き、`⚠️` を付けて grep できるようにする。
 
+## ⚠️ Expo Go では Apple でサインインが使えない（出典: 本プロジェクト 2026-09-26）
+- 公式の文書（SDK 57）は「Included in Expo Go」と書いているが、App Store の Expo Go（`executionEnvironment: storeClient`）には `ExpoAppleAuthentication` のネイティブモジュールが入っていなかった
+- `isAvailableAsync()` はモジュールが無いとき**エラーを出さずに false を返す**。「OS が使えないと言った」と見分けが付かない
+- 対策: `src/app/sign-in.tsx` で `requireOptionalNativeModule("ExpoAppleAuthentication")` を見て、「機能が入っていない」を別に出す。Apple でのサインインを試すのは EAS の開発用ビルドから
+- 文書に書いてあっても、実機で見るまでは「使える」と書かない
+
 ## ⚠️ react-query は失敗を黙って「一時停止」にする（出典: 本プロジェクト 2026-09-26）
 - 既定の `networkMode: "online"` では、react-query がオフライン・画面が前面にないと判断すると、再試行を `paused` にして止める。**エラーにも成功にもならず、読み込み中の表示のまま止まる**
 - Web のプレビューで、接続先が無いのに40秒以上読み込み中のままになって見つけた。`fetchStatus` を出して `paused` と分かった

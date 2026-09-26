@@ -49,7 +49,15 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 
 1. Apple Developer で App ID `com.tiffanysho.watchedwork` を作り、Sign In with Apple を有効にする
 2. Supabase の Authentication > Providers > Apple を有効にし、Client IDs に `com.tiffanysho.watchedwork` を入れる
-   - Expo Go で試す場合は `host.exp.Exponent` も足す（本番前に外す）
+   - ⚠️ **Expo Go では Apple でサインインできない**（App Store の Expo Go にはこの機能が入っていなかった。2026-09-26 に実機で確認）。試すには手順5の開発用ビルドが要る
+
+Expo Go で開くときは `--go` を付ける（`expo-dev-client` が入っているので、付けないと開発用ビルド向けの QR コードが出て、Expo Go では開けない）。
+
+```bash
+npx expo start --go --tunnel
+```
+
+Expo Go とパソコンの Expo CLI は、同じ Expo のアカウントでログインしておく（違うと「You're signed in to Expo CLI as …」で止まる）。
 
 ### 5. iPhone で動かす
 
