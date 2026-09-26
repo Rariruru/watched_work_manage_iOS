@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="ja">
+<!-- 2026-09-26 時点（第2版）のワイヤーフレーム。実装の正ではない。Claude 側の /spec で作成し、以後の持ち主は Codex（docs/collaboration.md §2）。
+     公開版: https://claude.ai/artifact/DczPJBtEZHrgcmJPHEChbf（上田のみ閲覧可）。ブラウザで直接開けば見られる -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>観た作品と聖地 ワイヤーフレーム</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f3f3f1; --paper:#ffffff; --ink:#1d1d1b; --ink2:#5b5b57; --ink3:#8e8e89;
+  --line:#c9c9c4; --fill:#e6e6e2; --fill2:#d6d6d1; --mark:#1d1d1b; --markInk:#ffffff;
+  --warn:#8a5a00; --warnBg:#f6ecd6; --ng:#9b2c2c; --ngBg:#f5e1e1; --ok:#2f6b3a; --okBg:#e0efe2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#1a1a19; --paper:#242423; --ink:#ececea; --ink2:#b3b3ae; --ink3:#85857f;
+    --line:#474744; --fill:#30302e; --fill2:#3d3d3a; --mark:#ececea; --markInk:#1a1a19;
+    --warn:#e3b760; --warnBg:#3a3020; --ng:#e79a9a; --ngBg:#3d2626; --ok:#8fd19c; --okBg:#223526;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#1a1a19; --paper:#242423; --ink:#ececea; --ink2:#b3b3ae; --ink3:#85857f;
+  --line:#474744; --fill:#30302e; --fill2:#3d3d3a; --mark:#ececea; --markInk:#1a1a19;
+  --warn:#e3b760; --warnBg:#3a3020; --ng:#e79a9a; --ngBg:#3d2626; --ok:#8fd19c; --okBg:#223526;
+}
+body{background:var(--bg);color:var(--ink);font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",sans-serif;line-height:1.7;padding-inline:16px;padding-block:32px 64px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+h1,h2,h3{text-wrap:balance;line-height:1.35;margin:0}
+h1{font-size:26px}
+h2{font-size:19px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3{font-size:15px}
+p{margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.notice{display:flex;flex-direction:column;gap:6px;border:1.5px dashed var(--ink2);padding:14px 16px;background:var(--paper)}
+.notice strong{font-size:15px}
+.meta{color:var(--ink2);font-size:13px}
+section{display:flex;flex-direction:column;gap:18px}
+.lead{max-width:68ch;color:var(--ink2)}
+.flow{background:var(--paper);border:1px solid var(--line);padding:16px;overflow-x:auto}
+
+/* artboards */
+.boards{display:grid;grid-template-columns:repeat(auto-fill,minmax(262px,1fr));gap:28px 22px}
+.board{display:flex;flex-direction:column;gap:8px}
+.board .cap{display:flex;gap:8px;align-items:baseline}
+.board .id{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink3)}
+.board .cap h3{font-size:14px}
+.board .note{font-size:12px;color:var(--ink2)}
+.phone{width:100%;max-width:262px;aspect-ratio:9/17.5;border:2px solid var(--ink);border-radius:30px;background:var(--paper);overflow:hidden;display:flex;flex-direction:column;position:relative;font-size:12px}
+.sb{height:22px;flex:none}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:4px 12px 8px;border-bottom:1px solid var(--line);gap:6px;flex:none}
+.nav b{font-size:14px}
+.nav .a{color:var(--ink2);font-size:11px}
+.scr{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.center{justify-content:center;align-items:center;text-align:center}
+.box{background:var(--fill);border:1px solid var(--line)}
+.x{background:
+  linear-gradient(to top right,transparent calc(50% - .5px),var(--line) 50%,transparent calc(50% + .5px)),
+  linear-gradient(to bottom right,transparent calc(50% - .5px),var(--line) 50%,transparent calc(50% + .5px)),var(--fill);border:1px solid var(--line)}
+.btn{border:1.5px solid var(--ink);border-radius:8px;padding:7px 10px;text-align:center;font-weight:700}
+.btn.p{background:var(--mark);color:var(--markInk)}
+.btn.d{border-color:var(--ng);color:var(--ng)}
+.btn.s{padding:4px 8px;font-size:11px;font-weight:400}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:10.5px;color:var(--ink2)}
+.in{border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-height:28px;color:var(--ink3)}
+.in.v{color:var(--ink)}
+.in.err{border-color:var(--ng)}
+.errt{color:var(--ng);font-size:10.5px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);border-radius:999px;padding:1px 8px;font-size:10.5px}
+.chip.on{background:var(--mark);color:var(--markInk);border-color:var(--mark)}
+.item{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--fill2)}
+.item .x{width:34px;height:46px;flex:none}
+.item .t{display:flex;flex-direction:column;gap:1px;min-width:0}
+.item .t b{font-size:12px}
+.item .t span{font-size:10.5px;color:var(--ink2)}
+.stars{letter-spacing:2px;font-size:13px}
+.seg{display:flex;border:1px solid var(--ink);border-radius:7px;overflow:hidden}
+.seg span{flex:1;text-align:center;padding:4px 0;font-size:10.5px;border-right:1px solid var(--ink)}
+.seg span:last-child{border-right:0}
+.seg .on{background:var(--mark);color:var(--markInk)}
+.row{display:flex;gap:6px;align-items:center}
+.row.sp{justify-content:space-between}
+.sub{font-size:10.5px;color:var(--ink2)}
+.sec{font-size:11px;font-weight:700;color:var(--ink2);margin-top:4px}
+.toast{position:absolute;left:10px;right:10px;bottom:16px;border-radius:10px;padding:8px 10px;font-size:11px;border:1px solid}
+.toast.ng{background:var(--ngBg);color:var(--ng);border-color:var(--ng)}
+.toast.ok{background:var(--okBg);color:var(--ok);border-color:var(--ok)}
+.sheet{position:absolute;inset:auto 0 0 0;background:var(--paper);border-top:1.5px solid var(--ink);border-radius:16px 16px 0 0;padding:14px 12px 20px;display:flex;flex-direction:column;gap:8px}
+.dim{position:absolute;inset:0;background:color-mix(in srgb,var(--ink) 35%,transparent)}
+.alert{position:absolute;left:24px;right:24px;top:34%;background:var(--paper);border:1.5px solid var(--ink);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;text-align:center}
+.pin{width:14px;height:14px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--ink);margin:auto}
+.flag{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--warnBg);color:var(--warn);border:1px solid var(--warn);font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;flex:none}
+.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.photos div{aspect-ratio:1}
+
+/* gaps + table */
+.gaps{display:flex;flex-direction:column;gap:12px;counter-reset:g}
+.gap{background:var(--paper);border:1px solid var(--line);padding:12px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start}
+.gap .flag{grid-row:span 3;margin-top:2px}
+.gap h3{font-size:14.5px}
+.gap .fix{font-size:13.5px}
+.gap .fix b{font-size:11px;letter-spacing:.08em;color:var(--ink2);margin-right:6px}
+.gap .where{font-size:12px;color:var(--ink3)}
+.tbl{overflow-x:auto;background:var(--paper);border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:13px}
+th,td{border-bottom:1px solid var(--fill2);padding:8px 10px;text-align:left;vertical-align:top}
+thead th{font-size:12px;color:var(--ink2);background:var(--fill);font-weight:700}
+tbody th{font-weight:700;white-space:nowrap}
+.y{color:var(--ok);font-weight:700}
+.n{color:var(--ng);font-weight:700}
+.w{color:var(--warn);font-weight:700}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
+.tabs{display:flex;gap:12px;border-bottom:1px solid var(--line);font-size:11px}
+.tabs span{padding:3px 0;color:var(--ink2)}
+.tabs .on{color:var(--ink);font-weight:700;border-bottom:2px solid var(--ink)}
+.ep{display:grid;grid-template-columns:44px 1fr auto;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--fill2);font-size:11px}
+.ep .no{color:var(--ink2)}
+.ep .stars{font-size:11px;letter-spacing:1px}
+.muted{color:var(--ink3)}
+.season{border:1px solid var(--line);border-radius:8px;padding:7px 8px;display:flex;flex-direction:column;gap:2px}
+.menu{display:flex;flex-direction:column}
+.menu div{padding:9px 4px;border-bottom:1px solid var(--fill2);font-weight:700}
+.new{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;padding:0 5px;border:1px solid var(--ink);border-radius:3px;margin-left:4px;vertical-align:1px}
+.done{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 20px;font-size:13px;color:var(--ink2)}
+.done li::before{content:"済 ";font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ok)}
+</style>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <p class="meta mono">docs/requirements.md &middot; UI wireframe &middot; 第2版</p>
+  <h1>観た作品と聖地巡礼の記録アプリ &mdash; ワイヤーフレーム</h1>
+  <div class="notice">
+    <strong>2026-09-26 時点（第2版）。実装の正ではありません。</strong>
+    <span class="meta">要件の抜けを見つけるためのワイヤーフレームです。色・フォント・余白は決めていません。前提は iPhone 縦向き・ライト固定です。第2版で「シーズンと各話の評価」「作品ごと / シーズンごとの表示切り替え」「グッズ・イベントの記録」を足しました。第2版で増えた画面には <span class="new">NEW</span> を付けています。<span class="flag">A</span> のような記号は、下の「差し戻し候補」の記号です。</span>
+  </div>
+</header>
+
+<section>
+  <h2>画面遷移（主経路）</h2>
+  <p class="lead">映画は作品詳細で評価します。アニメ・ドラマは作品詳細からシーズンに入り、シーズン全体の評価と各話の評価をそれぞれ付けます。聖地巡礼・グッズ・イベントの記録は、どの種別でも作品に紐づきます。</p>
+  <div class="flow">
+<pre class="mermaid">
+flowchart LR
+  A[A サインイン] -->|Apple でサインイン| B[B 作品一覧]
+  A --> T[規約・プライバシー]
+  B -->|＋| M[M 追加メニュー]
+  M -->|作品を追加| C[C 作品の追加]
+  M -->|聖地 / グッズ / イベント| P[作品を選ぶ / 新規作成] --> F[F 記録の作成]
+  C -->|保存| D
+  B -->|作品をタップ| D{作品詳細}
+  D -->|映画| DM[D-m 映画の詳細] -->|感想を編集| E[E 感想・評価]
+  D -->|アニメ・ドラマ| DA[D-a 作品詳細] -->|シーズンをタップ| S[S シーズン詳細]
+  DA -->|シーズンを追加| SA[S-add シーズンの追加]
+  S -->|感想を編集| E
+  S -->|話をタップ| EP[EP 話の評価]
+  DA -->|記録を追加| F
+  DM -->|記録を追加| F
+  B -->|設定| H[H 設定] -->|アカウント削除| X[I 削除の確認] -->|確定| A
+</pre>
+  </div>
+</section>
+
+<section>
+  <h2>アートボード</h2>
+  <p class="lead">1画面につき1枚です。空の状態・入力エラー・読み込み失敗・通信なしの画面も描いています。</p>
+  <div class="boards">
+
+    <div class="board">
+      <div class="cap"><span class="id">A</span><h3>サインイン</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="scr center" style="gap:14px">
+          <div class="x" style="width:64px;height:64px;border-radius:16px"></div>
+          <b style="font-size:15px">アプリ名（未定）</b>
+          <p class="sub">観た作品の感想と、<br>聖地・グッズ・イベントの記録を残す</p>
+          <div class="btn p" style="width:85%">Apple でサインイン</div>
+          <p class="sub">利用規約 &middot; プライバシーポリシー</p>
+        </div>
+      </div>
+      <p class="note">基準1・16。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">B</span><h3>作品一覧（作品ごと）</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">設定</span><b>作品</b><span class="a">＋</span></div>
+        <div class="scr">
+          <div class="seg"><span class="on">作品ごと</span><span>シーズンごと</span></div>
+          <div class="chips"><span class="chip on">すべて</span><span class="chip">アニメ</span><span class="chip">ドラマ</span><span class="chip">映画</span></div>
+          <div class="chips"><span class="chip on">すべて</span><span class="chip">観たい</span><span class="chip">観ている</span><span class="chip">観た</span></div>
+          <div class="item"><div class="x"></div><div class="t"><b>進撃の巨人</b><span>アニメ &middot; 4シーズン</span><span class="row">記録 6件 <span class="flag">C</span></span></div></div>
+          <div class="item"><div class="x"></div><div class="t"><b>すずめの戸締まり</b><span>映画 &middot; 観た &middot; ★★★★☆</span><span>記録 3件</span></div></div>
+          <div class="item"><div class="x"></div><div class="t"><b>silent</b><span>ドラマ &middot; 1シーズン</span><span>記録 0件</span></div></div>
+        </div>
+      </div>
+      <p class="note">基準10・28。アニメ・ドラマの行には作品全体の評価が無い。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">B-s</span><h3>作品一覧（シーズンごと）<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">設定</span><b>作品</b><span class="a">＋</span></div>
+        <div class="scr">
+          <div class="seg"><span>作品ごと</span><span class="on">シーズンごと</span></div>
+          <div class="chips"><span class="chip on">すべて</span><span class="chip">アニメ</span><span class="chip">ドラマ</span><span class="chip">映画</span></div>
+          <div class="item"><div class="x"></div><div class="t"><b>進撃の巨人 シーズン1</b><span>アニメ &middot; 観た &middot; ★★★★★</span><span>全25話</span></div></div>
+          <div class="item"><div class="x"></div><div class="t"><b>進撃の巨人 シーズン2</b><span>アニメ &middot; 観た &middot; ★★★★☆</span><span>全12話</span></div></div>
+          <div class="item"><div class="x"></div><div class="t"><b>進撃の巨人 The Final Season</b><span>アニメ &middot; 観ている &middot; 未評価</span><span>全16話</span></div></div>
+          <div class="item"><div class="x"></div><div class="t"><b class="row">すずめの戸締まり <span class="flag">D</span></b><span>映画 &middot; 観た &middot; ★★★★☆</span></div></div>
+        </div>
+      </div>
+      <p class="note">基準28: 同じ作品のシーズンが別の行になる。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">B-0</span><h3>作品一覧（0件）</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">設定</span><b>作品</b><span class="a">＋</span></div>
+        <div class="scr center" style="gap:10px">
+          <div class="x" style="width:56px;height:56px;border-radius:50%"></div>
+          <b>まだ作品がありません</b>
+          <p class="sub">観た作品を追加して、感想や聖地・グッズ・イベントの記録を残しましょう</p>
+          <div class="btn p" style="width:75%">作品を追加</div>
+        </div>
+      </div>
+      <p class="note">基準2。右上の「＋」から記録も始められる（基準19）。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">B-e</span><h3>読み込み失敗</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">設定</span><b>作品</b><span class="a muted">＋</span></div>
+        <div class="scr center" style="gap:8px">
+          <b>読み込めませんでした</b>
+          <p class="sub">通信状態を確かめて、もう一度お試しください</p>
+          <div class="btn" style="width:60%">再試行</div>
+        </div>
+      </div>
+      <p class="note">基準13。この状態でも「設定」には入れる。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">M</span><h3>追加メニュー<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">設定</span><b>作品</b><span class="a">＋</span></div>
+        <div class="scr"></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="menu">
+            <div>作品を追加</div>
+            <div>聖地を記録</div>
+            <div>グッズを記録</div>
+            <div>イベントを記録</div>
+          </div>
+          <p class="sub">記録は、次の画面で作品を選ぶか新しく作る</p>
+        </div>
+      </div>
+      <p class="note">基準19。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">C</span><h3>作品の追加（アニメ）</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">キャンセル</span><b>作品を追加</b><span class="a"><b>保存</b></span></div>
+        <div class="scr">
+          <div class="field"><label>タイトル（必須）</label><div class="in v">進撃の巨人</div></div>
+          <div class="field"><label>種別</label><div class="seg"><span class="on">アニメ</span><span>ドラマ</span><span>映画</span></div></div>
+          <div class="sec">シーズン1</div>
+          <div class="field"><label>話数（あとで入力してもよい）</label><div class="in v">25</div></div>
+          <div class="field"><label>視聴状態</label><div class="seg"><span>観たい</span><span>観ている</span><span class="on">観た</span></div></div>
+          <p class="sub">アニメ・ドラマの視聴状態は、シーズン1に付く</p>
+        </div>
+      </div>
+      <p class="note">基準4・5・23。同じタイトル・種別があれば警告（基準18）。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">D-a</span><h3>作品詳細（アニメ）<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">‹ 作品</span><b>作品詳細</b><span class="a">編集</span></div>
+        <div class="scr">
+          <div class="row"><div class="x" style="width:40px;height:54px"></div><div style="display:flex;flex-direction:column"><b style="font-size:13px">進撃の巨人</b><span class="sub">アニメ &middot; 4シーズン</span></div></div>
+          <div class="sec row sp"><span>シーズン</span><span class="btn s">＋ シーズンを追加</span></div>
+          <div class="season"><div class="row sp"><b>シーズン1</b><span class="stars" style="font-size:11px">★★★★★</span></div><span class="sub">観た &middot; 全25話</span></div>
+          <div class="season"><div class="row sp"><b>シーズン2</b><span class="stars" style="font-size:11px">★★★★☆</span></div><span class="sub">観た &middot; 全12話</span></div>
+          <div class="season"><div class="row sp"><b>The Final Season</b><span class="sub">未評価</span></div><span class="sub">観ている &middot; 全16話</span></div>
+          <div class="tabs" style="margin-top:4px"><span class="on">聖地 3</span><span>グッズ 2</span><span>イベント 1</span></div>
+          <div class="item"><div class="x" style="width:36px;height:36px"></div><div class="t"><b>日田市 大山ダム</b><span>2026-08-14</span></div></div>
+          <div class="btn s" style="align-self:flex-start">＋ 記録を追加</div>
+        </div>
+      </div>
+      <p class="note">作品全体の評価欄は無い（非スコープ）。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">D-m</span><h3>作品詳細（映画）</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">‹ 作品</span><b>作品詳細</b><span class="a">編集</span></div>
+        <div class="scr">
+          <div class="row"><div class="x" style="width:40px;height:54px"></div><div style="display:flex;flex-direction:column"><b style="font-size:13px">すずめの戸締まり</b><span class="sub">映画</span></div></div>
+          <div class="sec">感想・評価</div>
+          <div class="row sp"><span class="stars">★★★★☆</span><span class="chip">観た &middot; 2026-08-01</span></div>
+          <p class="sub">扉を閉める場面の音の使い方がよかった。</p>
+          <div class="btn s" style="align-self:flex-start">感想を編集</div>
+          <div class="tabs" style="margin-top:4px"><span class="on">聖地 2</span><span>グッズ 1</span><span>イベント 0</span></div>
+          <div class="item"><div class="x" style="width:36px;height:36px"></div><div class="t"><b>油津の港</b><span>2026-08-14</span></div></div>
+          <div class="item"><div class="x" style="width:36px;height:36px"></div><div class="t"><b>御茶ノ水駅 聖橋</b><span>2026-09-02</span></div></div>
+          <div class="btn s" style="align-self:flex-start">＋ 記録を追加</div>
+        </div>
+      </div>
+      <p class="note">基準6・8・11・23（シーズン欄なし）。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">S</span><h3>シーズン詳細<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">‹ 進撃の巨人</span><b>シーズン2</b><span class="a">編集</span></div>
+        <div class="scr">
+          <div class="sec">シーズン全体</div>
+          <div class="row sp"><span class="stars">★★★★☆</span><span class="chip">観た &middot; 2026-07-20</span></div>
+          <p class="sub">後半の畳みかけがすごい。</p>
+          <div class="btn s" style="align-self:flex-start">感想を編集</div>
+          <div class="sec">各話（全12話）</div>
+          <div class="ep"><span class="no">第1話</span><span>獣の巨人</span><span class="stars">★★★★☆</span></div>
+          <div class="ep"><span class="no">第2話</span><span class="muted">&mdash;</span><span class="sub">未評価</span></div>
+          <div class="ep"><span class="no">第3話</span><span>南西へ</span><span class="stars">★★★★★</span></div>
+          <div class="ep"><span class="no">第4話</span><span class="muted">&mdash;</span><span class="sub">未評価</span></div>
+          <div class="ep"><span class="no">第5話</span><span class="muted">&mdash;</span><span class="sub">未評価</span></div>
+        </div>
+      </div>
+      <p class="note">基準24・25。シーズン評価と各話評価は独立。平均は出さない。話の行の文字は一言感想の冒頭。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">S-0</span><h3>話数が未入力のシーズン<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">‹ silent</span><b>シーズン1</b><span class="a">編集</span></div>
+        <div class="scr">
+          <div class="sec">シーズン全体</div>
+          <div class="row sp"><span class="sub">未評価</span><span class="chip">観ている</span></div>
+          <div class="btn s" style="align-self:flex-start">感想を編集</div>
+          <div class="sec">各話</div>
+          <div class="scr center" style="gap:6px">
+            <b>話数が入力されていません</b>
+            <p class="sub">話数を入れると、各話を評価できます</p>
+            <div class="btn s">話数を入力</div>
+            <div class="row sub"><span class="flag">E</span>この入口が要件に無い</div>
+          </div>
+        </div>
+      </div>
+      <p class="note">話数 0 のとき（contracts.md）。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">EP</span><h3>話の評価<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">‹ 進撃の巨人</span><b>シーズン2</b><span class="a">編集</span></div>
+        <div class="scr"></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="row sp"><b>第3話</b><span class="sub">閉じる</span></div>
+          <div class="field"><label>評価（任意）</label><div class="stars" style="font-size:20px">★★★★★</div><span class="sub">評価を外す</span></div>
+          <div class="field"><label>一言感想</label><div class="in v" style="min-height:44px">南西へ向かう場面の緊張感がよかった</div></div>
+          <div class="btn p">保存</div>
+        </div>
+      </div>
+      <p class="note">基準7・25。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">S-add</span><h3>シーズンの編集<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">キャンセル</span><b>シーズン</b><span class="a"><b>保存</b></span></div>
+        <div class="scr">
+          <div class="field"><label>シーズン名（必須）</label><div class="in v">シーズン2</div></div>
+          <div class="field"><label>話数</label><div class="in v">8</div></div>
+          <div class="btn d s" style="align-self:flex-start;margin-top:8px">このシーズンを削除</div>
+          <div class="row sub"><span class="flag">B</span>最後の1シーズンを消せるかが要件に無い</div>
+        </div>
+        <div class="dim"></div>
+        <div class="alert">
+          <b>第9〜12話の評価が消えます</b>
+          <p class="sub">第10話に評価が付いています。話数を8にすると、その評価と一言感想は元に戻せません。</p>
+          <div class="btn d">8話にする</div>
+          <div class="btn">やめる</div>
+        </div>
+      </div>
+      <p class="note">基準26・27。追加も同じ画面（削除ボタンなし）。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">E</span><h3>感想・評価の編集</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">キャンセル</span><b>シーズン2の感想</b><span class="a"><b>保存</b></span></div>
+        <div class="scr">
+          <div class="field"><label>視聴状態</label><div class="seg"><span>観たい</span><span>観ている</span><span class="on">観た</span></div></div>
+          <div class="field"><label>評価（任意）</label><div class="stars" style="font-size:20px">★★★★☆</div><span class="sub">評価を外す</span></div>
+          <div class="field"><label>視聴日（任意）</label><div class="in v">2026-07-20</div></div>
+          <div class="field"><label>感想</label><div class="in v" style="min-height:96px">後半の畳みかけがすごい。</div></div>
+        </div>
+      </div>
+      <p class="note">映画とシーズンで同じ画面。基準6・7。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">F</span><h3>記録の作成（聖地巡礼）</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">キャンセル</span><b>記録を追加</b><span class="a"><b>保存</b></span></div>
+        <div class="scr">
+          <div class="seg"><span class="on">聖地</span><span>グッズ</span><span>イベント</span></div>
+          <p class="sub">作品: すずめの戸締まり</p>
+          <div class="box" style="height:92px;display:flex;align-items:center;position:relative"><div class="pin"></div><span class="sub" style="position:absolute;bottom:4px;right:6px">地図を動かして位置を決める</span></div>
+          <div class="field"><label>場所名（必須）</label><div class="in v">油津の港</div></div>
+          <div class="field"><label>訪問日</label><div class="in v">2026-08-14</div></div>
+          <div class="field"><label>写真（最大4枚）</label><div class="photos"><div class="x"></div><div class="x"></div><div class="box" style="display:flex;align-items:center;justify-content:center">＋</div><div></div></div></div>
+          <div class="field"><label>メモ</label><div class="in">メモ</div></div>
+        </div>
+      </div>
+      <p class="note">基準8・20・21・22。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">F-g</span><h3>記録の作成（グッズ）<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">キャンセル</span><b>記録を追加</b><span class="a"><b>保存</b></span></div>
+        <div class="scr">
+          <div class="seg"><span>聖地</span><span class="on">グッズ</span><span>イベント</span></div>
+          <p class="sub">作品: 進撃の巨人</p>
+          <div class="field"><label>写真（最大4枚）</label><div class="photos"><div class="x"></div><div class="box" style="display:flex;align-items:center;justify-content:center">＋</div><div></div><div></div></div></div>
+          <div class="field"><label>グッズ名（必須）</label><div class="in err"></div><span class="errt">グッズ名を入力してください</span></div>
+          <div class="field"><label>入手日</label><div class="in v">2026-09-26</div></div>
+          <div class="field"><label>メモ</label><div class="in">メモ</div></div>
+          <p class="sub">グッズには地図の欄が無い</p>
+        </div>
+      </div>
+      <p class="note">基準20・29。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">F-v</span><h3>記録の作成（イベント）<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">キャンセル</span><b>記録を追加</b><span class="a"><b>保存</b></span></div>
+        <div class="scr">
+          <div class="seg"><span>聖地</span><span>グッズ</span><span class="on">イベント</span></div>
+          <p class="sub">作品: 進撃の巨人</p>
+          <div class="field"><label>イベント名（必須）</label><div class="in v">進撃の巨人展 FINAL</div></div>
+          <div class="field"><label>開催日（参加日）</label><div class="in v">2026-09-20</div></div>
+          <div class="box" style="height:72px;display:flex;align-items:center;position:relative"><div class="pin"></div><span class="sub" style="position:absolute;bottom:4px;right:6px">会場の位置（任意）</span></div>
+          <div class="field"><label>写真（最大4枚）</label><div class="photos"><div class="x"></div><div class="x"></div><div class="x"></div><div class="box" style="display:flex;align-items:center;justify-content:center">＋</div></div></div>
+          <div class="field"><label>メモ</label><div class="in">メモ</div></div>
+        </div>
+      </div>
+      <p class="note">基準30。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">F-p</span><h3>位置・写真の許可を拒否</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">キャンセル</span><b>記録を追加</b><span class="a"><b>保存</b></span></div>
+        <div class="scr">
+          <div class="seg"><span class="on">聖地</span><span>グッズ</span><span>イベント</span></div>
+          <div class="box" style="height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><div class="pin"></div><span class="sub">現在地は使えません。地図を動かして選べます</span></div>
+          <div class="field"><label>場所名（必須）</label><div class="in v">油津の港</div></div>
+          <div class="field"><label>写真</label><div class="in">写真へのアクセスが許可されていません</div></div>
+          <div class="btn s" style="align-self:flex-start">設定アプリで許可する</div>
+        </div>
+      </div>
+      <p class="note">基準21。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">F-e</span><h3>写真の一部が失敗</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">キャンセル</span><b>記録を追加</b><span class="a"><b>保存</b></span></div>
+        <div class="scr">
+          <div class="seg"><span>聖地</span><span>グッズ</span><span class="on">イベント</span></div>
+          <div class="field"><label>イベント名（必須）</label><div class="in v">進撃の巨人展 FINAL</div></div>
+          <div class="field"><label>写真</label><div class="photos"><div class="x"></div><div class="x"></div><div class="x" style="border:2px solid var(--ng)"></div><div></div></div></div>
+          <div class="row"><span class="btn s">再試行</span><span class="btn s">この写真を外す</span></div>
+        </div>
+        <div class="toast ng">3枚目の写真を保存できませんでした。</div>
+      </div>
+      <p class="note">基準12・22。「保存しました」は出さない。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">E-t</span><h3>作品の編集（種別の変更）<span class="new">NEW</span></h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">キャンセル</span><b>作品を編集</b><span class="a"><b>保存</b></span></div>
+        <div class="scr">
+          <div class="field"><label>タイトル（必須）</label><div class="in v">劇場版 進撃の巨人</div></div>
+          <div class="field"><label>種別</label><div class="seg"><span class="on">アニメ</span><span>ドラマ</span><span>映画</span></div></div>
+          <div class="row sub"><span class="flag">A</span>アニメ → 映画に変えると、シーズンと各話の評価はどうなるか</div>
+          <div class="btn d s" style="align-self:flex-start;margin-top:8px">この作品を削除</div>
+        </div>
+      </div>
+      <p class="note">基準11・17。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">H</span><h3>設定</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">‹ 作品</span><b>設定</b><span class="a"></span></div>
+        <div class="scr">
+          <div class="sec">アカウント</div>
+          <div class="item"><div class="t"><b>Apple ID でサインイン中</b></div></div>
+          <div class="item"><b>利用規約</b></div>
+          <div class="item"><b>プライバシーポリシー</b></div>
+          <div class="item"><b>お問い合わせ</b></div>
+          <div class="item"><b>サインアウト</b></div>
+          <div class="item"><b style="color:var(--ng)">アカウントを削除</b></div>
+        </div>
+      </div>
+      <p class="note">作品一覧が読み込み失敗でも入れる。</p>
+    </div>
+
+    <div class="board">
+      <div class="cap"><span class="id">I</span><h3>アカウント削除の確認</h3></div>
+      <div class="phone"><div class="sb"></div>
+        <div class="nav"><span class="a">‹ 作品</span><b>設定</b><span class="a"></span></div>
+        <div class="scr"></div>
+        <div class="dim"></div>
+        <div class="alert">
+          <b>アカウントを削除しますか？</b>
+          <p class="sub">作品・シーズン・各話の評価、聖地・グッズ・イベントの記録と写真がすべて消え、元に戻せません。</p>
+          <div class="btn d">削除する</div>
+          <div class="btn">キャンセル</div>
+        </div>
+      </div>
+      <p class="note">基準3。失敗したら「削除できませんでした。記録は残っています」。</p>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>差し戻し候補（第2版）</h2>
+  <p class="lead">シーズン・各話・グッズ・イベントを画面に並べて見つかった抜けです。データの形に関わるもの（A・B）は contracts.md にも書きます。</p>
+  <div class="gaps">
+    <div class="gap"><span class="flag">A</span><h3>種別をアニメ・ドラマと映画の間で変えたとき、評価がどうなるか決まっていない</h3>
+      <p class="fix"><b>反映案</b>映画に変えるときは「シーズンと各話の評価がすべて消えます」と確認を出し、確定したら消す。映画からアニメ・ドラマに変えるときは、映画の評価・感想・視聴状態・視聴日をそのまま「シーズン1」に移す。受け入れ基準に追加。</p>
+      <p class="where">E-t</p></div>
+    <div class="gap"><span class="flag">B</span><h3>最後の1シーズンを削除できるかが決まっていない</h3>
+      <p class="fix"><b>反映案</b>アニメ・ドラマは必ず1シーズン以上持つので、最後の1シーズンには削除ボタンを出さない（作品ごと削除する）。contracts.md には仮で書いてある。受け入れ基準に追加。</p>
+      <p class="where">S-add</p></div>
+    <div class="gap"><span class="flag">C</span><h3>「作品ごと」表示で、アニメ・ドラマの行に何を出すかと、評価での並び替えが決まっていない</h3>
+      <p class="fix"><b>反映案</b>作品全体の評価は無いので、行にはシーズン数と記録の件数だけを出す。Should の「評価で並び替え」は「シーズンごと」表示でだけ使えるようにする。</p>
+      <p class="where">B</p></div>
+    <div class="gap"><span class="flag">D</span><h3>「シーズンごと」表示で映画がどう出るかが決まっていない</h3>
+      <p class="fix"><b>反映案</b>映画は1作品1行のまま、シーズンの行と並べて出す。受け入れ基準28に追記。</p>
+      <p class="where">B-s</p></div>
+    <div class="gap"><span class="flag">E</span><h3>話数を入れていないシーズンから、各話の評価に進めない</h3>
+      <p class="fix"><b>反映案</b>話数が 0 のシーズン詳細では「話数が入力されていません」と「話数を入力」ボタンを出す。受け入れ基準に追加。</p>
+      <p class="where">S-0</p></div>
+  </div>
+  <h3 style="margin-top:6px">第1版の差し戻し（11件、反映済み）</h3>
+  <ul class="done">
+    <li>一覧の「＋」から記録を始められる</li>
+    <li>サインイン前に規約・ポリシーを読める</li>
+    <li>追加時の視聴状態（既定は「観た」）</li>
+    <li>作品のタイトル・種別を編集できる</li>
+    <li>同じ作品の二重登録を警告する</li>
+    <li>評価を「未評価」に戻せる</li>
+    <li>視聴日を残せる</li>
+    <li>記録の必須項目は名前だけ</li>
+    <li>位置・写真の許可が無くても記録できる</li>
+    <li>写真の一部失敗で「保存しました」を出さない</li>
+    <li>アカウント削除の失敗時の表示</li>
+  </ul>
+</section>
+
+<section>
+  <h2>到達性チェック</h2>
+  <p class="lead">状態ごとに、目的の操作まで辿り着けるかを見ました。<span class="n">✗</span> や <span class="w">△</span> に記号が付いたマスが、上の差し戻し候補にあたります。</p>
+  <div class="legend"><span><span class="y">○</span> 辿り着ける</span><span><span class="w">△</span> 要件に書いていない</span><span><span class="n">✗</span> 辿り着けない</span><span>― 対象外</span></div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>状態</th><th>作品を追加</th><th>シーズン・映画の評価</th><th>各話の評価</th><th>聖地・グッズ・イベント</th><th>規約・ポリシー</th><th>アカウント削除</th></tr></thead>
+      <tbody>
+        <tr><th>未ログイン</th><td>―</td><td>―</td><td>―</td><td>―</td><td class="y">○ サインイン画面</td><td>―</td></tr>
+        <tr><th>サインイン直後（0件）</th><td class="y">○</td><td class="y">○ 追加の後</td><td class="y">○ 追加の後</td><td class="y">○ ＋ から</td><td class="y">○ 設定</td><td class="y">○ 設定</td></tr>
+        <tr><th>映画の作品</th><td class="y">○</td><td class="y">○ 作品詳細</td><td>―</td><td class="y">○</td><td class="y">○</td><td class="y">○</td></tr>
+        <tr><th>アニメ（話数あり）</th><td class="y">○</td><td class="y">○ シーズン詳細</td><td class="y">○ シーズン詳細</td><td class="y">○</td><td class="y">○</td><td class="y">○</td></tr>
+        <tr><th>アニメ（話数 0）</th><td class="y">○</td><td class="y">○</td><td class="n">✗ 話が無い <span class="flag">E</span></td><td class="y">○</td><td class="y">○</td><td class="y">○</td></tr>
+        <tr><th>最後の1シーズン</th><td class="y">○</td><td class="y">○</td><td class="y">○</td><td class="y">○</td><td class="y">○</td><td class="w">△ シーズンの削除 <span class="flag">B</span></td></tr>
+        <tr><th>種別を変更した直後</th><td class="y">○</td><td class="w">△ 評価の行き先 <span class="flag">A</span></td><td class="w">△ <span class="flag">A</span></td><td class="y">○ 記録は残る</td><td class="y">○</td><td class="y">○</td></tr>
+        <tr><th>シーズンごと表示</th><td class="y">○</td><td class="y">○ 行をタップ</td><td class="y">○</td><td class="w">△ 映画の行 <span class="flag">D</span></td><td class="y">○</td><td class="y">○</td></tr>
+        <tr><th>読み込み失敗</th><td class="y">○ 再試行後</td><td class="y">○ 再試行後</td><td class="y">○ 再試行後</td><td class="y">○ 再試行後</td><td class="y">○ 設定</td><td class="y">○ 設定</td></tr>
+        <tr><th>通信なし</th><td class="muted">保存しない（非スコープ）</td><td class="muted">保存しない（非スコープ）</td><td class="muted">保存しない（非スコープ）</td><td class="muted">保存しない（非スコープ）</td><td class="y">○ Web ページ</td><td class="y">○ 失敗表示あり</td></tr>
+        <tr><th>位置の許可なし</th><td class="y">○</td><td class="y">○</td><td class="y">○</td><td class="y">○ 手動で地図</td><td class="y">○</td><td class="y">○</td></tr>
+        <tr><th>写真の許可なし</th><td class="y">○</td><td class="y">○</td><td class="y">○</td><td class="y">○ 写真なしで保存</td><td class="y">○</td><td class="y">○</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) mermaid.initialize({ startOnLoad: true });</script>
