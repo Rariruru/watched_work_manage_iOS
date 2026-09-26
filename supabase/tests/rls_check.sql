@@ -1,7 +1,7 @@
 -- 行レベルセキュリティの確認（受け入れ基準14：他人の作品・シーズン・各話の評価は読めない・書けない）
 --
 -- 使い方: Supabase の SQL Editor に全文を貼って、そのまま Run する。書き換える所は無い。
--- 前提: アカウントが1人分以上あること（Authentication > Users に1行以上）。migrations を2つとも適用済みであること。
+-- 前提: アカウントが1人分以上あること（Authentication > Users に1行以上）。supabase/migrations の SQL をすべて適用済みであること。
 --
 -- 何をするか:
 --   1. 仮の「他人」アカウントと、その人の作品・シーズンを作る
@@ -70,7 +70,7 @@ begin
     end;
 
     begin
-      perform public.set_episode_review(v_other_season, 4, 3::smallint, 'rls_check');
+      perform public.set_episode_review(v_other_season, 4, 3::smallint, 'rls_check', 'rls_check');
       v_episode_review := 'INSERTED';
     exception
       -- ⚠️ 他人のシーズンは見えないので、RLS より先に「番号が範囲外」（check_violation）で止まることがある。どちらも書き込めていない
