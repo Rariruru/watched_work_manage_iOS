@@ -1,7 +1,7 @@
--- 行レベルセキュリティの確認（受け入れ基準14：他人の作品・シーズンは読めない・書けない）
+-- 行レベルセキュリティの確認（受け入れ基準14：他人の作品・シーズン・各話の評価は読めない・書けない）
 --
 -- 使い方: Supabase の SQL Editor に全文を貼って、そのまま Run する。書き換える所は無い。
--- 前提: アカウントが1人分以上あること（Authentication > Users に1行以上）。
+-- 前提: アカウントが1人分以上あること（Authentication > Users に1行以上）。migrations を2つとも適用済みであること。
 --
 -- 何をするか:
 --   1. 仮の「他人」アカウントと、その人の作品・シーズンを作る
@@ -10,7 +10,8 @@
 --   4. 最後に結果を1行で出す
 --
 -- 期待する結果（1行）:
---   others_works_visible = 0 / others_seasons_visible = 0 / others_rows_updated = 0 / insert_into_others_work = blocked
+--   others_works_visible = 0 / others_seasons_visible = 0 / others_episodes_visible = 0 / others_rows_updated = 0
+--   insert_into_others_work = blocked / review_others_episode = blocked
 --   verdict = OK
 
 do $$
@@ -18,6 +19,9 @@ declare
   v_me uuid;
   v_other uuid := gen_random_uuid();
   v_other_work uuid;
+  v_other_season uuid;
+  v_episodes int;
+  v_episode_review text := 'not run';
   v_works int;
   v_seasons int;
   v_updated int;
@@ -39,8 +43,12 @@ begin
     values (gen_random_uuid(), v_other, 'rls_check の仮の作品', 'anime')
     returning id into v_other_work;
 
-    insert into public.seasons (work_id, user_id, name, position)
-    values (v_other_work, v_other, 'シーズン1', 1);
+    insert into public.seasons (work_id, user_id, name, position, episode_count)
+    values (v_other_work, v_other, 'シーズン1', 1, 12)
+    returning id into v_other_season;
+
+    insert into public.episodes (season_id, user_id, number, rating)
+    values (v_other_season, v_other, 3, 5);
 
     -- 2. 1人目のアカウントとして振る舞う
     perform set_config('request.jwt.claims', json_build_object('sub', v_me, 'role', 'authenticated')::text, true);
@@ -48,6 +56,7 @@ begin
 
     select count(*) into v_works from public.works where user_id <> v_me;
     select count(*) into v_seasons from public.seasons where user_id <> v_me;
+    select count(*) into v_episodes from public.episodes where user_id <> v_me;
 
     update public.works set title = title where id = v_other_work;
     get diagnostics v_updated = row_count;
@@ -58,6 +67,15 @@ begin
     exception
       when insufficient_privilege then v_insert := 'blocked';
       when others then v_insert := 'error: ' || sqlerrm;
+    end;
+
+    begin
+      perform public.set_episode_review(v_other_season, 4, 3::smallint, 'rls_check');
+      v_episode_review := 'INSERTED';
+    exception
+      -- ⚠️ 他人のシーズンは見えないので、RLS より先に「番号が範囲外」（check_violation）で止まることがある。どちらも書き込めていない
+      when insufficient_privilege or check_violation then v_episode_review := 'blocked';
+      when others then v_episode_review := 'error: ' || sqlerrm;
     end;
 
     execute 'reset role';
@@ -72,6 +90,8 @@ begin
   -- 結果は取り消しの後も残るよう、セッションの設定に入れて下の select で出す
   perform set_config('rls_check.others_works_visible', coalesce(v_works::text, ''), false);
   perform set_config('rls_check.others_seasons_visible', coalesce(v_seasons::text, ''), false);
+  perform set_config('rls_check.others_episodes_visible', coalesce(v_episodes::text, ''), false);
+  perform set_config('rls_check.review_others_episode', v_episode_review, false);
   perform set_config('rls_check.others_rows_updated', coalesce(v_updated::text, ''), false);
   perform set_config('rls_check.insert_into_others_work', v_insert, false);
   perform set_config('rls_check.error', coalesce(v_error, ''), false);
@@ -80,14 +100,18 @@ end $$;
 select
   current_setting('rls_check.others_works_visible') as others_works_visible,
   current_setting('rls_check.others_seasons_visible') as others_seasons_visible,
+  current_setting('rls_check.others_episodes_visible') as others_episodes_visible,
   current_setting('rls_check.others_rows_updated') as others_rows_updated,
   current_setting('rls_check.insert_into_others_work') as insert_into_others_work,
+  current_setting('rls_check.review_others_episode') as review_others_episode,
   nullif(current_setting('rls_check.error'), '') as setup_error,
   case
     when current_setting('rls_check.error') <> '' then 'ERROR（setup_error を見る）'
     when current_setting('rls_check.others_works_visible') = '0'
      and current_setting('rls_check.others_seasons_visible') = '0'
+     and current_setting('rls_check.others_episodes_visible') = '0'
      and current_setting('rls_check.others_rows_updated') = '0'
+     and current_setting('rls_check.review_others_episode') = 'blocked'
      and current_setting('rls_check.insert_into_others_work') = 'blocked' then 'OK'
     else 'NG（他人の行に触れられている）'
   end as verdict;
