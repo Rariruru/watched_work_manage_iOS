@@ -16,3 +16,11 @@ export const WATCH_STATUS_LABEL: Record<WatchStatus, string> = {
 export function episodeLabel(n: number): string {
   return `第${n}話`;
 }
+
+export const UNRATED_LABEL = "未評価";
+
+/** ★の並び。未評価は「未評価」 */
+export function ratingLabel(rating: number | null): string {
+  if (rating === null) return UNRATED_LABEL;
+  return "★".repeat(rating) + "☆".repeat(5 - rating);
+}

@@ -16,7 +16,10 @@ import {
 import type { Season, Work } from "./types.ts";
 
 function season(id: string, workId: string, position: number, status: Season["status"]): Season {
-  return { id, workId, name: `シーズン${position}`, position, episodeCount: 12, status, watchedOn: null };
+  return {
+    id, workId, name: `シーズン${position}`, position, episodeCount: 12, status,
+    watchedOn: null, rating: null, review: null, episodes: [],
+  };
 }
 
 const aot: Work = {
@@ -25,6 +28,8 @@ const aot: Work = {
   type: "anime",
   status: null,
   watchedOn: null,
+  rating: null,
+  review: null,
   createdAt: "2026-09-26T03:00:00Z",
   seasons: [season("s1", "w1", 1, "watched"), season("s2", "w1", 2, "watching")],
 };
@@ -34,6 +39,8 @@ const suzume: Work = {
   type: "movie",
   status: "watched",
   watchedOn: "2026-08-01",
+  rating: 4,
+  review: "扉を閉める場面の音の使い方がよかった。",
   createdAt: "2026-09-26T02:00:00Z",
   seasons: [],
 };
@@ -43,6 +50,8 @@ const silent: Work = {
   type: "drama",
   status: null,
   watchedOn: null,
+  rating: null,
+  review: null,
   createdAt: "2026-09-26T01:00:00Z",
   seasons: [season("s3", "w3", 1, "want")],
 };
