@@ -17,6 +17,12 @@ export function episodeLabel(n: number): string {
   return `第${n}話`;
 }
 
+/** 話の行の見出し。タイトルがあれば「第3話 南西へ」、無ければ「第3話」 */
+export function episodeHeading(n: number, title: string | null): string {
+  const t = title?.trim();
+  return t ? `${episodeLabel(n)} ${t}` : episodeLabel(n);
+}
+
 export const UNRATED_LABEL = "未評価";
 
 /** ★の並び。未評価は「未評価」 */

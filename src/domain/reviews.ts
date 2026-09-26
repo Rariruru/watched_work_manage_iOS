@@ -1,4 +1,4 @@
-import type { EpisodeReview, Rating, Season } from "./types";
+import type { EpisodeReview, Rating, Season, Work } from "./types";
 
 /**
  * 感想・評価の判断をまとめた純関数。
@@ -58,9 +58,43 @@ export function todayString(now: Date): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
-/** 評価・一言感想のどちらも無ければ、その話は「未評価」（記録を消す） */
-export function isEmptyEpisodeReview(rating: Rating | null, comment: string | null): boolean {
-  return rating === null && (comment === null || comment.trim() === "");
+/** 評価・一言感想・タイトルのどれも無ければ、その話は記録を消す（未評価・タイトルなしに戻る） */
+export function isEmptyEpisodeReview(
+  rating: Rating | null,
+  comment: string | null,
+  title: string | null
+): boolean {
+  const blank = (t: string | null) => t === null || t.trim() === "";
+  return rating === null && blank(comment) && blank(title);
+}
+
+// ---------------------------------------------------------------------------
+// アニメ・ドラマの作品全体の評価（2026-09-26 上田の決定。前は「作品全体の評価は持たない」だった）
+// ---------------------------------------------------------------------------
+
+export type SeriesRating =
+  /** 手動で付けた評価（1〜5 の整数） */
+  | { kind: "manual"; rating: Rating }
+  /** 評価の付いたシーズンの平均。小数第1位まで（四捨五入） */
+  | { kind: "average"; value: number }
+  /** 手動も無く、評価の付いたシーズンも無い */
+  | { kind: "none" };
+
+/**
+ * 作品全体の評価。手動の評価があればそれ、無ければ評価の付いたシーズンの平均。
+ * 未評価のシーズンは平均に数えない。平均は保存せず、表示のたびに計算する
+ */
+export function seriesRating(work: Work): SeriesRating {
+  if (work.rating !== null) return { kind: "manual", rating: work.rating };
+  const rated = work.seasons.map((s) => s.rating).filter((r): r is Rating => r !== null);
+  if (rated.length === 0) return { kind: "none" };
+  const avg = rated.reduce<number>((sum, r) => sum + r, 0) / rated.length;
+  return { kind: "average", value: Math.round(avg * 10) / 10 };
+}
+
+/** 平均の表示。常に小数第1位まで（4 → "4.0"） */
+export function formatAverage(value: number): string {
+  return value.toFixed(1);
 }
 
 export function findEpisodeReview(season: Season, number: number): EpisodeReview | undefined {
@@ -68,7 +102,7 @@ export function findEpisodeReview(season: Season, number: number): EpisodeReview
 }
 
 /**
- * 話数を newCount に減らしたときに消える、評価・一言感想のある話の番号（基準27）。
+ * 話数を newCount に減らしたときに消える、評価・一言感想・タイトルのある話の番号（基準27）。
  * 空なら確認は要らない
  */
 export function episodesLostOnShrink(season: Season, newCount: number): number[] {

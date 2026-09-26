@@ -5,13 +5,16 @@ import assert from "node:assert/strict";
 import {
   commentPreview,
   episodesLostOnShrink,
+  formatAverage,
+  seriesRating,
   isEmptyEpisodeReview,
   normalizeReviewText,
   todayString,
   toRating,
   validateWatchedOn,
 } from "./reviews.ts";
-import type { Season } from "./types.ts";
+import { episodeHeading } from "./labels.ts";
+import type { Season, Work } from "./types.ts";
 
 const season: Season = {
   id: "s2",
@@ -24,9 +27,9 @@ const season: Season = {
   rating: 4,
   review: null,
   episodes: [
-    { number: 3, rating: 5, comment: "南西へ向かう場面の緊張感がよかった" },
-    { number: 10, rating: 4, comment: null },
-    { number: 12, rating: null, comment: "最終話" },
+    { number: 3, rating: 5, comment: "南西へ向かう場面の緊張感がよかった", title: "南西へ" },
+    { number: 10, rating: 4, comment: null, title: null },
+    { number: 12, rating: null, comment: "最終話", title: null },
   ],
 };
 
@@ -57,11 +60,54 @@ test("今日の日付は数値から組み立てる", () => {
   assert.equal(todayString(new Date(2026, 8, 6)), "2026-09-06");
 });
 
-test("評価も一言感想も無ければ、その話は未評価", () => {
-  assert.equal(isEmptyEpisodeReview(null, null), true);
-  assert.equal(isEmptyEpisodeReview(null, "  "), true);
-  assert.equal(isEmptyEpisodeReview(5, null), false);
-  assert.equal(isEmptyEpisodeReview(null, "よかった"), false);
+test("評価・一言感想・タイトルのどれも無ければ、その話の記録を消す", () => {
+  assert.equal(isEmptyEpisodeReview(null, null, null), true);
+  assert.equal(isEmptyEpisodeReview(null, "  ", " "), true);
+  assert.equal(isEmptyEpisodeReview(5, null, null), false);
+  assert.equal(isEmptyEpisodeReview(null, "よかった", null), false);
+  // タイトルだけでも残す
+  assert.equal(isEmptyEpisodeReview(null, null, "南西へ"), false);
+});
+
+test("話の見出し: タイトルがあれば「第3話 南西へ」", () => {
+  assert.equal(episodeHeading(3, "南西へ"), "第3話 南西へ");
+  assert.equal(episodeHeading(3, null), "第3話");
+  assert.equal(episodeHeading(3, "  "), "第3話");
+});
+
+function series(rating: Work["rating"], seasonRatings: (Season["rating"])[]): Work {
+  return {
+    id: "w1",
+    title: "進撃の巨人",
+    type: "anime",
+    status: null,
+    watchedOn: null,
+    rating,
+    review: null,
+    createdAt: "2026-09-26T00:00:00Z",
+    seasons: seasonRatings.map((r, i) => ({ ...season, id: `s${i}`, position: i + 1, rating: r })),
+  };
+}
+
+test("作品全体の評価: 手動が無ければ評価の付いたシーズンの平均（小数第1位）", () => {
+  assert.deepEqual(seriesRating(series(null, [5, 4])), { kind: "average", value: 4.5 });
+  // 未評価のシーズンは数えない
+  assert.deepEqual(seriesRating(series(null, [5, null, 4])), { kind: "average", value: 4.5 });
+  // 1シーズンならその評価
+  assert.deepEqual(seriesRating(series(null, [4])), { kind: "average", value: 4 });
+  // 5,4,4 → 4.333… → 4.3
+  assert.deepEqual(seriesRating(series(null, [5, 4, 4])), { kind: "average", value: 4.3 });
+  // 全部未評価
+  assert.deepEqual(seriesRating(series(null, [null, null])), { kind: "none" });
+});
+
+test("作品全体の評価: 手動の評価があればそれを使う", () => {
+  assert.deepEqual(seriesRating(series(2, [5, 5])), { kind: "manual", rating: 2 });
+});
+
+test("平均は常に小数第1位まで出す", () => {
+  assert.equal(formatAverage(4), "4.0");
+  assert.equal(formatAverage(4.5), "4.5");
 });
 
 test("話数を減らすと消える話の番号（基準27）", () => {

@@ -16,11 +16,12 @@ export const DEFAULT_WATCH_STATUS: WatchStatus = "watched";
 export const RATINGS = [1, 2, 3, 4, 5] as const;
 export type Rating = (typeof RATINGS)[number];
 
-/** 各話の評価・一言感想。どちらかがある話だけが存在する（無い話は未評価） */
+/** 各話の評価・一言感想・タイトル。どれかがある話だけが存在する（無い話は未評価・タイトルなし） */
 export type EpisodeReview = {
   number: number;
   rating: Rating | null;
   comment: string | null;
+  title: string | null;
 };
 
 export type Season = {
@@ -35,7 +36,7 @@ export type Season = {
   watchedOn: string | null;
   rating: Rating | null;
   review: string | null;
-  /** 評価か一言感想のある話だけ。番号の昇順 */
+  /** 評価・一言感想・タイトルのどれかがある話だけ。番号の昇順 */
   episodes: EpisodeReview[];
 };
 
@@ -46,8 +47,12 @@ export type Work = {
   /** 映画のときだけ値がある。アニメ・ドラマはシーズンに持つ */
   status: WatchStatus | null;
   watchedOn: string | null;
-  /** 映画のときだけ値がある。アニメ・ドラマはシーズンに持つ */
+  /**
+   * 映画: 映画の評価。
+   * アニメ・ドラマ: 作品全体の**手動の**評価。null ならシーズンの平均を使う（reviews.ts の seriesRating）
+   */
   rating: Rating | null;
+  /** 映画のときだけ値がある。アニメ・ドラマの感想はシーズンに持つ */
   review: string | null;
   createdAt: string;
   /** 作品内の並び順（position の昇順）。映画は常に空 */
