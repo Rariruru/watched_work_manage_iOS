@@ -59,6 +59,16 @@ npx expo start --go --tunnel
 
 Expo Go とパソコンの Expo CLI は、同じ Expo のアカウントでログインしておく（違うと「You're signed in to Expo CLI as …」で止まる）。
 
+#### 開発用ログイン（Expo Go と Web で画面を確かめる）
+
+開発中（`__DEV__`）だけ、サインイン画面にメールとパスワードの欄が出る。本番のビルドには入らない（`src/app/sign-in.tsx`）。
+
+1. Supabase の Authentication > Providers > Email が有効になっていることを確かめる（既定で有効）
+2. Authentication > Users > Add user > Create new user で、テスト用のアカウントを作る。「Auto Confirm User」にチェックを入れる
+3. アプリのサインイン画面の「開発用ログイン」に、そのメールとパスワードを入れる
+
+⚠️ App Store に出す前に、Email のログインを Supabase 側で無効にするか決める。アプリから欄が消えても、Supabase の Email が有効なままなら API から直接アカウントを作れる。
+
 ### 5. iPhone で動かす
 
 Apple でのサインインを試すには、開発用ビルド（development build）を EAS で作る。
