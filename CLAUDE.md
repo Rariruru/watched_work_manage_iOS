@@ -10,8 +10,8 @@
 ## プロジェクト概要
 - 名前: 観た作品と聖地巡礼の記録アプリ（アプリ名は未定。`docs/requirements.md` 未決事項）
 - 目的 / 誰のためのアプリか: `docs/requirements.md` §1・§2
-- スタック: iOS アプリ（iPhone 縦向きのみ・ライト固定）／ Supabase（DB・認証は Apple でサインイン・写真のストレージ）。UI の実装方式（SwiftUI か Expo か）は Codex の実装計画で確定する
-- リポジトリ構成の要点: 未確定（初回スキャフォールド後に確定する）。`docs/` に要件・データ契約・罠・連絡ファイルを置く
+- スタック: iOS アプリ（iPhone 縦向きのみ・ライト固定）＝ Expo SDK 57 ＋ Expo Router ＋ TypeScript ／ Supabase（DB・認証は Apple でサインイン・写真のストレージ）。Expo は 2026-09-26 に上田が決めた（連絡ファイル `2026-09-26-claude-foundation-started.md`）
+- リポジトリ構成の要点: 画面（ルート）は `src/app/`、判断の純関数は `src/domain/`、Supabase との読み書きは `src/api/`、部品は `src/components/<画面>/`、スキーマは `supabase/migrations/`。`docs/` に要件・データ契約・罠・連絡ファイルを置く
 
 ## 毎回読む文書
 - `./docs/collaboration.md` — 共同開発のルール（担当・ファイルの持ち主・連絡ファイル・Git）
@@ -21,18 +21,22 @@
 
 ## 検証コマンド（このプロジェクトで「done」を証明する手段）
 > 完了報告の前に必ずこれらを実行する。実行できないものは「⚠️ 未検証」として明示する。
-- Lint: 未確定（初回スキャフォールド後に確定する）
-- 型チェック: 未確定（初回スキャフォールド後に確定する）
-- テスト: 未確定（初回スキャフォールド後に確定する）
-- ビルド: 未確定（初回スキャフォールド後に確定する）
-- 起動 / 目視確認: 実機（TestFlight 版）で確認するまでは未確認。シミュレーターでの確認は「シミュレーターで確認」と書く
+- Lint: `npm run lint`（expo lint）
+- 型チェック: `npm run typecheck`。⚠️ typed routes の型は開発サーバを一度起動すると `.expo/types/` にできる。無い間は画面遷移の道筋の誤りを検出しない
+- テスト: `npm test`（`src/**/*.test.ts` を node --test で動かす。対象は `src/domain/` の純関数）
+- ビルド: `npm run export:web`（まとめて組み立てられるかの確認。iOS のビルドは EAS で人間が行う）
+- 起動 / 目視確認: Web は `npx expo start --web`（Apple でのサインインは使えない）。実機（開発用ビルド・TestFlight 版）で確認するまでは未確認。Web での確認は「Web で確認」と書く
 - データ / SQL: ローカルの DB は無い。スキーマとマイグレーションは SQL ファイルで用意し、Supabase への適用は人間が行う → 適用前は未検証扱い
 
 ## Single Source of Truth（一元管理する場所）
 > 同じ定数・テーブルを複数ファイルに複製しない。編集前にここを確認・grep する。
-- データの形（列挙値・必須項目・上限）とドメイン用語: `docs/contracts.md`（Codex が持ち主）。コード側の置き場は初回実装時にここへ記録する
+- データの形（列挙値・必須項目・上限）とドメイン用語: `docs/contracts.md`（Codex が持ち主）。コード側は `src/domain/types.ts`、DB 側は `supabase/migrations/` の check 制約。⚠️ 列挙値の綴りはこの2か所が複製なので、片方だけ変えない
+- 作品・シーズンの判断（絞り込み・重複・種別の変更・最後のシーズン）: `src/domain/works.ts`。画面に条件分岐を書かない
 - 本人しか読み書きできない、という判定: Supabase の行レベルセキュリティだけ。アプリ側で重ねて判定しない
-- デザイントークン（色・余白・タイポグラフィ）: 初回実装時にここへ記録する。生の色コードを直接書かない
+- デザイントークン（色・余白・タイポグラフィ）: `src/theme/tokens.ts`（下敷きは `docs/design/wireframe-v3.html`）。生の色コードを直接書かない
+- 種別・視聴状態などの画面の名前: `src/domain/labels.ts`
+- 利用規約・プライバシーポリシーの URL: `src/config/links.ts`（まだ null）
+- アプリ名: `app.json` の `name`（画面は `expo-constants` から読む）
 - 画面の文言（エラー・空状態の文言）: まだ無し。同じ文言が2箇所に出たらここに記録する
 
 ## 実装前に必ず読む参照資料
