@@ -1,11 +1,14 @@
 import { supabase } from "./supabase";
 import { AppError, toAppError } from "./errors";
-import type { Season, WatchStatus, Work, WorkType } from "@/domain/types";
+import type { EpisodeReview, Rating, Season, WatchStatus, Work, WorkType } from "@/domain/types";
+import { toRating } from "@/domain/reviews";
 
 /**
  * 作品・シーズンの読み書き。画面はここを通して Supabase を触る（.from() を画面に書かない）。
  * 本人の行だけに絞るのは RLS の仕事。ここで user_id を付けて絞らない
  */
+
+type EpisodeRow = { number: number; rating: number | null; comment: string | null };
 
 type SeasonRow = {
   id: string;
@@ -15,6 +18,9 @@ type SeasonRow = {
   episode_count: number;
   status: WatchStatus;
   watched_on: string | null;
+  rating: number | null;
+  review: string | null;
+  episodes: EpisodeRow[] | null;
 };
 
 type WorkRow = {
@@ -23,12 +29,21 @@ type WorkRow = {
   type: WorkType;
   status: WatchStatus | null;
   watched_on: string | null;
+  rating: number | null;
+  review: string | null;
   created_at: string;
   seasons: SeasonRow[] | null;
 };
 
+// ⚠️ rating / review / episodes は 20260926010000_reviews_and_episodes.sql で足した列・表。
+//    適用前だと一覧の取得ごと失敗する。そのときは errors.ts が「データベースの更新が適用されていません」を出す
 const WORK_SELECT =
-  "id, title, type, status, watched_on, created_at, seasons(id, work_id, name, position, episode_count, status, watched_on)";
+  "id, title, type, status, watched_on, rating, review, created_at, " +
+  "seasons(id, work_id, name, position, episode_count, status, watched_on, rating, review, episodes(number, rating, comment))";
+
+function toEpisode(row: EpisodeRow): EpisodeReview {
+  return { number: row.number, rating: toRating(row.rating), comment: row.comment };
+}
 
 function toSeason(row: SeasonRow): Season {
   return {
@@ -39,6 +54,9 @@ function toSeason(row: SeasonRow): Season {
     episodeCount: row.episode_count,
     status: row.status,
     watchedOn: row.watched_on,
+    rating: toRating(row.rating),
+    review: row.review,
+    episodes: (row.episodes ?? []).map(toEpisode).sort((a, b) => a.number - b.number),
   };
 }
 
@@ -53,6 +71,8 @@ function toWork(row: WorkRow): Work {
     type: row.type,
     status: row.status,
     watchedOn: row.watched_on,
+    rating: toRating(row.rating),
+    review: row.review,
     createdAt: row.created_at,
     seasons: (row.seasons ?? []).map(toSeason).sort((a, b) => a.position - b.position),
   };
@@ -155,7 +175,55 @@ export async function deleteSeason(id: string): Promise<void> {
   );
 }
 
-/** アカウント削除。作品とシーズンは DB の on delete cascade で消える */
+/** 映画・シーズンの感想（E 感想・評価の編集）。空の欄は null で送る */
+export type ReviewInput = {
+  status: WatchStatus;
+  rating: Rating | null;
+  watchedOn: string | null;
+  review: string | null;
+};
+
+function reviewColumns(input: ReviewInput) {
+  return {
+    status: input.status,
+    rating: input.rating,
+    watched_on: input.watchedOn,
+    review: input.review,
+  };
+}
+
+/** 映画の感想・評価（基準6・7） */
+export async function saveMovieReview(workId: string, input: ReviewInput): Promise<void> {
+  await run("感想を保存できませんでした", () =>
+    supabase.from("works").update(reviewColumns(input)).eq("id", workId)
+  );
+}
+
+/** シーズン全体の感想・評価（基準6・7） */
+export async function saveSeasonReview(seasonId: string, input: ReviewInput): Promise<void> {
+  await run("感想を保存できませんでした", () =>
+    supabase.from("seasons").update(reviewColumns(input)).eq("id", seasonId)
+  );
+}
+
+/** 話の評価・一言感想（基準25）。両方 null なら DB 側でその話の記録を消す（未評価に戻る） */
+export async function setEpisodeReview(
+  seasonId: string,
+  number: number,
+  rating: Rating | null,
+  comment: string | null
+): Promise<void> {
+  await run("話の評価を保存できませんでした", () =>
+    supabase.rpc("set_episode_review", {
+      p_season_id: seasonId,
+      p_number: number,
+      p_rating: rating,
+      p_comment: comment,
+    })
+  );
+}
+
+/** アカウント削除。作品・シーズン・各話の評価は DB の on delete cascade で消える */
 export async function deleteAccount(): Promise<void> {
   await run("削除できませんでした。記録は残っています", () => supabase.rpc("delete_account"));
 }

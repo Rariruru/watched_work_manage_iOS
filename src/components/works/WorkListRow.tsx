@@ -1,6 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { WATCH_STATUS_LABEL, WORK_TYPE_LABEL } from "@/domain/labels";
 import type { ListRow } from "@/domain/works";
+import type { Rating } from "@/domain/types";
+import { StarDisplay } from "@/components/common/StarRating";
 import { color, radius, spacing, text } from "@/theme/tokens";
 
 /**
@@ -8,7 +10,7 @@ import { color, radius, spacing, text } from "@/theme/tokens";
  * アニメ・ドラマの「作品ごと」の行には作品全体の評価を出さない（作品全体の評価は持たない）
  */
 export function WorkListRow({ row, onPress }: { row: ListRow; onPress: () => void }) {
-  const { title, sub } = describe(row);
+  const { title, sub, rating } = describe(row);
   return (
     <Pressable
       accessibilityRole="button"
@@ -21,18 +23,21 @@ export function WorkListRow({ row, onPress }: { row: ListRow; onPress: () => voi
           {title}
         </Text>
         <Text style={styles.sub}>{sub}</Text>
+        {rating !== undefined && <StarDisplay rating={rating} size={text.caption} />}
       </View>
     </Pressable>
   );
 }
 
-function describe(row: ListRow): { title: string; sub: string } {
+/** rating が undefined の行は★の欄ごと出さない（作品ごと表示のアニメ・ドラマ） */
+function describe(row: ListRow): { title: string; sub: string; rating?: Rating | null } {
   const type = WORK_TYPE_LABEL[row.work.type];
   switch (row.kind) {
     case "movie":
       return {
         title: row.work.title,
         sub: [type, row.work.status ? WATCH_STATUS_LABEL[row.work.status] : null].filter(Boolean).join(" · "),
+        rating: row.work.rating,
       };
     case "series":
       return { title: row.work.title, sub: `${type} · ${row.seasonCount}シーズン` };
@@ -42,6 +47,7 @@ function describe(row: ListRow): { title: string; sub: string } {
         sub: `${type} · ${WATCH_STATUS_LABEL[row.season.status]} · ${
           row.season.episodeCount > 0 ? `全${row.season.episodeCount}話` : "話数未入力"
         }`,
+        rating: row.season.rating,
       };
   }
 }

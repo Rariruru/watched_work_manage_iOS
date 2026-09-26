@@ -2,8 +2,11 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { WATCH_STATUS_LABEL, WORK_TYPE_LABEL } from "@/domain/labels";
 import { hasSeasons } from "@/domain/works";
+import { DEFAULT_WATCH_STATUS } from "@/domain/types";
 import type { Work } from "@/domain/types";
+import { StarDisplay } from "@/components/common/StarRating";
 import { Button, Header, Screen, SectionTitle } from "@/components/common/ui";
+import { ReviewSummary } from "@/components/works/ReviewSummary";
 import { WorkGate } from "@/components/works/WorkGate";
 import { color, radius, spacing, text } from "@/theme/tokens";
 
@@ -44,7 +47,10 @@ function Detail({ work }: { work: Work }) {
                 onPress={() => router.push({ pathname: "/seasons/[id]", params: { id: s.id } })}
                 style={({ pressed }) => [styles.season, pressed && { opacity: 0.7 }]}
               >
-                <Text style={styles.seasonName}>{s.name}</Text>
+                <View style={styles.seasonHead}>
+                  <Text style={styles.seasonName}>{s.name}</Text>
+                  <StarDisplay rating={s.rating} size={text.caption} />
+                </View>
                 <Text style={styles.sub}>
                   {WATCH_STATUS_LABEL[s.status]} · {s.episodeCount > 0 ? `全${s.episodeCount}話` : "話数未入力"}
                 </Text>
@@ -59,9 +65,15 @@ function Detail({ work }: { work: Work }) {
           </>
         ) : (
           <>
-            {/* 映画にシーズン欄は出さない（基準23）。評価・感想は次の範囲で足す */}
-            <SectionTitle>視聴状態</SectionTitle>
-            <Text style={styles.value}>{work.status ? WATCH_STATUS_LABEL[work.status] : "未設定"}</Text>
+            {/* 映画にシーズン欄は出さない（基準23） */}
+            <SectionTitle>感想・評価</SectionTitle>
+            <ReviewSummary
+              status={work.status ?? DEFAULT_WATCH_STATUS}
+              rating={work.rating}
+              watchedOn={work.watchedOn}
+              review={work.review}
+              onEdit={() => router.push({ pathname: "/works/[id]/review", params: { id: work.id } })}
+            />
           </>
         )}
       </ScrollView>
@@ -75,7 +87,6 @@ const styles = StyleSheet.create({
   thumb: { width: 52, height: 70, borderRadius: radius.sm, backgroundColor: color.brandSoft },
   title: { fontSize: text.title, fontWeight: "700", color: color.ink },
   sub: { fontSize: text.caption, color: color.muted },
-  value: { fontSize: text.body, color: color.ink },
   season: {
     padding: spacing.md,
     borderRadius: radius.md,
@@ -84,5 +95,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     gap: 2,
   },
+  seasonHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   seasonName: { fontSize: text.body, fontWeight: "700", color: color.ink },
 });

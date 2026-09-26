@@ -3,6 +3,8 @@ import { deleteSeason, updateSeason } from "@/api/works";
 import { useSave } from "@/api/useSave";
 import type { Season, Work } from "@/domain/types";
 import { canDeleteSeason } from "@/domain/works";
+import { episodesLostOnShrink } from "@/domain/reviews";
+import { episodeLabel } from "@/domain/labels";
 import { useDialog } from "@/components/common/dialog";
 import { Banner, Button } from "@/components/common/ui";
 import { SeasonForm } from "@/components/works/SeasonForm";
@@ -10,7 +12,7 @@ import { SeasonGate } from "@/components/works/WorkGate";
 
 /**
  * シーズンの編集・削除（受け入れ基準26・27・33）。
- * ⚠️ 基準27（評価の付いた話が消える確認）は、各話の評価を作る範囲で足す。今は話に評価が無いので確認を出さない
+ * 話数を減らして評価の付いた話が範囲外になるときは確認を出す。範囲外の話の評価は DB のトリガが消す
  */
 export default function EditSeason() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,7 +28,7 @@ function Edit({ work, season }: { work: Work; season: Season }) {
   async function onDelete() {
     const proceed = await dialog.confirm({
       title: `「${season.name}」を削除しますか？`,
-      message: "元に戻せません。",
+      message: "このシーズンの評価・感想と、各話の評価もすべて消え、元に戻せません。",
       confirmLabel: "削除する",
       destructive: true,
     });
@@ -43,6 +45,17 @@ function Edit({ work, season }: { work: Work; season: Season }) {
       saving={saving}
       onCancel={() => router.back()}
       onSubmit={async (v) => {
+        // 評価・一言感想のある話が範囲外になるなら確認する（基準27）
+        const lost = episodesLostOnShrink(season, v.episodeCount);
+        if (lost.length > 0) {
+          const proceed = await dialog.confirm({
+            title: `第${v.episodeCount + 1}〜${season.episodeCount}話の評価が消えます`,
+            message: `${lost.map(episodeLabel).join("・")}に評価や一言感想が付いています。話数を${v.episodeCount}にすると、元に戻せません。`,
+            confirmLabel: `${v.episodeCount}話にする`,
+            destructive: true,
+          });
+          if (!proceed) return;
+        }
         const ok = await run(() => updateSeason(season.id, v), "保存しました", "シーズンを保存できませんでした");
         if (ok) router.back();
       }}
