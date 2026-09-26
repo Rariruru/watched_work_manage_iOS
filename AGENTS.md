@@ -23,7 +23,9 @@
 - 文書は UTF-8（BOM なし）・改行 LF
 - 答えても実装が変わらない項目は書かない
 - 非スコープ（やらないこと）を必ず書く
-- 1つの PR には上流の文書だけを入れる。ブランチ名は `spec/<機能名>`
+- `main` に直接コミットする（ブランチと PR は使わない）。作業前と push 前に `git pull --rebase`、競合したら相手の持ち物は相手の版を採る（`collaboration.md` §5）
+- 1コミットには上流の文書だけを入れる。本文の最後に `AI: codex` と書く
+- 実装計画は `status: draft` で書き、共同開発者が OK したら `status: ready` にする。Claude は `ready` のものしか実装しない（`collaboration.md` §3）
 
 ## 人間がやること
-- 本番への SQL 適用・App Store Connect の操作・本番ビルドと提出・push とマージ。Codex は手順を書くところまで
+- 本番への SQL 適用・App Store Connect の操作・本番ビルドと提出・push の指示。Codex は手順を書くところまで
