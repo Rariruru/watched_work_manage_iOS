@@ -2,24 +2,60 @@ import { useEffect, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import Constants from "expo-constants";
+import { requireOptionalNativeModule } from "expo";
 import { useAuth } from "@/auth/AuthProvider";
 import { LegalLinks } from "@/components/common/LegalLinks";
 import { Banner, Screen } from "@/components/common/ui";
 import { toAppError } from "@/api/errors";
 import { color, HIT_SIZE, radius, spacing, text } from "@/theme/tokens";
 
+/**
+ * Apple でサインインが使えるか。
+ * ⚠️ 「使えない」と「判定に失敗した」を分ける。前は両方を「使えません」にしていて、
+ *    Expo Go で原因が分からなかった（2026-09-26）
+ */
+type Availability =
+  | { state: "checking" }
+  | { state: "available" }
+  | { state: "unavailable" }
+  /** アプリにネイティブモジュールが入っていない。isAvailableAsync はこのとき黙って false を返す */
+  | { state: "module-missing" }
+  | { state: "check-failed"; detail: string };
+
+/** ネイティブモジュールの有無は起動中に変わらないので、読み込み時に1回だけ見る */
+const APPLE_MODULE_MISSING =
+  Platform.OS !== "web" && !requireOptionalNativeModule("ExpoAppleAuthentication");
+
+/** 実行環境（Expo Go / 開発用ビルド / 本番）。開発中の表示だけに使う */
+function runtimeLabel(): string {
+  return `${Constants.executionEnvironment}${Constants.expoVersion ? ` / Expo Go ${Constants.expoVersion}` : ""}`;
+}
+
+/** 開発中だけ、失敗の中身を画面に出す（実機のログを見なくても原因が分かるように） */
+function devDetail(e: unknown): string | null {
+  if (!__DEV__) return null;
+  const err = e as { code?: unknown; message?: unknown };
+  return [err?.code, err?.message ?? String(e)].filter(Boolean).join(": ");
+}
+
 /** A サインイン（受け入れ基準1・16）。サインインの手段は Apple だけ */
 export default function SignIn() {
   const { signInWithApple } = useAuth();
-  const [available, setAvailable] = useState<boolean | null>(null);
+  const [availability, setAvailability] = useState<Availability>(
+    APPLE_MODULE_MISSING ? { state: "module-missing" } : { state: "checking" }
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (APPLE_MODULE_MISSING) {
+      console.warn("[sign-in] ExpoAppleAuthentication のネイティブモジュールが無い", runtimeLabel());
+      return;
+    }
     AppleAuthentication.isAvailableAsync()
-      .then(setAvailable)
+      .then((ok) => setAvailability({ state: ok ? "available" : "unavailable" }))
       .catch((e) => {
         console.warn("[sign-in] Apple サインインが使えるか判定できなかった", e);
-        setAvailable(false);
+        setAvailability({ state: "check-failed", detail: devDetail(e) ?? "" });
       });
   }, []);
 
@@ -29,9 +65,15 @@ export default function SignIn() {
       await signInWithApple();
       // 成功するとセッションが変わり、ルートの Stack.Protected が作品一覧へ切り替える
     } catch (e) {
-      setError(toAppError(e, "Apple でサインインできませんでした").message);
+      const appError = toAppError(e, "Apple でサインインできませんでした");
+      const detail = devDetail(appError.cause ?? e);
+      setError(detail ? `${appError.message}\n（開発中のみ表示）${detail}` : appError.message);
     }
   }
+
+  // iOS では判定に失敗してもボタンは出す。押したときの本当のエラーを画面に出すため
+  const showButton =
+    availability.state === "available" || (availability.state === "check-failed" && Platform.OS === "ios");
 
   return (
     <Screen>
@@ -43,7 +85,7 @@ export default function SignIn() {
 
         {error && <Banner tone="error">{error}</Banner>}
 
-        {available ? (
+        {showButton && (
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
             buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
@@ -51,13 +93,28 @@ export default function SignIn() {
             style={styles.apple}
             onPress={onApple}
           />
-        ) : available === false ? (
+        )}
+        {availability.state === "unavailable" && (
           <Banner tone="info">
             {Platform.OS === "web"
               ? "Apple でのサインインは iPhone のアプリでだけ使えます"
               : "この端末では Apple でサインインできません"}
           </Banner>
-        ) : null}
+        )}
+        {availability.state === "module-missing" && (
+          <Banner tone="warn">
+            {`このアプリには Apple でサインインの機能が入っていません。${
+              __DEV__ ? `\n（開発中のみ表示）実行環境: ${runtimeLabel()}` : ""
+            }`}
+          </Banner>
+        )}
+        {availability.state === "check-failed" && (
+          <Banner tone="warn">
+            {`Apple でサインインが使えるか確かめられませんでした。${
+              availability.detail ? `\n（開発中のみ表示）${availability.detail}` : ""
+            }`}
+          </Banner>
+        )}
 
         <LegalLinks />
       </View>
