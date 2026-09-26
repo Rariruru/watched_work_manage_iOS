@@ -35,7 +35,7 @@ npm install
 
 ### 3. 接続先を設定する
 
-リポジトリ直下に `.env.local` を作る（`.gitignore` 済み。コミットしない）。
+リポジトリ直下の `.env.example` をコピーして `.env.local` を作り、値を入れる（`.env.local` は `.gitignore` 済み。コミットしない）。
 
 ```
 EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
