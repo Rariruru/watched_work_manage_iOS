@@ -8,7 +8,7 @@ import { toRating } from "@/domain/reviews";
  * 本人の行だけに絞るのは RLS の仕事。ここで user_id を付けて絞らない
  */
 
-type EpisodeRow = { number: number; rating: number | null; comment: string | null };
+type EpisodeRow = { number: number; rating: number | null; comment: string | null; title: string | null };
 
 type SeasonRow = {
   id: string;
@@ -35,14 +35,14 @@ type WorkRow = {
   seasons: SeasonRow[] | null;
 };
 
-// ⚠️ rating / review / episodes は 20260926010000_reviews_and_episodes.sql で足した列・表。
+// ⚠️ rating / review / episodes は 20260926010000_reviews_and_episodes.sql、episodes.title は 20260926020000_… で足した列・表。
 //    適用前だと一覧の取得ごと失敗する。そのときは errors.ts が「データベースの更新が適用されていません」を出す
 const WORK_SELECT =
   "id, title, type, status, watched_on, rating, review, created_at, " +
-  "seasons(id, work_id, name, position, episode_count, status, watched_on, rating, review, episodes(number, rating, comment))";
+  "seasons(id, work_id, name, position, episode_count, status, watched_on, rating, review, episodes(number, rating, comment, title))";
 
 function toEpisode(row: EpisodeRow): EpisodeReview {
-  return { number: row.number, rating: toRating(row.rating), comment: row.comment };
+  return { number: row.number, rating: toRating(row.rating), comment: row.comment, title: row.title };
 }
 
 function toSeason(row: SeasonRow): Season {
@@ -206,20 +206,30 @@ export async function saveSeasonReview(seasonId: string, input: ReviewInput): Pr
   );
 }
 
-/** 話の評価・一言感想（基準25）。両方 null なら DB 側でその話の記録を消す（未評価に戻る） */
+/** 話の評価・一言感想・タイトル（基準25）。全部 null なら DB 側でその話の記録を消す */
 export async function setEpisodeReview(
   seasonId: string,
   number: number,
-  rating: Rating | null,
-  comment: string | null
+  input: { rating: Rating | null; comment: string | null; title: string | null }
 ): Promise<void> {
   await run("話の評価を保存できませんでした", () =>
     supabase.rpc("set_episode_review", {
       p_season_id: seasonId,
       p_number: number,
-      p_rating: rating,
-      p_comment: comment,
+      p_rating: input.rating,
+      p_comment: input.comment,
+      p_title: input.title,
     })
+  );
+}
+
+/**
+ * アニメ・ドラマの作品全体の手動の評価。null で「平均に戻す」。
+ * ⚠️ 映画の評価と同じ works.rating の列。アニメ・ドラマのときは「手動の評価」の意味になる
+ */
+export async function saveSeriesRating(workId: string, rating: Rating | null): Promise<void> {
+  await run("作品全体の評価を保存できませんでした", () =>
+    supabase.from("works").update({ rating }).eq("id", workId)
   );
 }
 

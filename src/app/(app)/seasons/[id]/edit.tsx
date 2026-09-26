@@ -45,12 +45,12 @@ function Edit({ work, season }: { work: Work; season: Season }) {
       saving={saving}
       onCancel={() => router.back()}
       onSubmit={async (v) => {
-        // 評価・一言感想のある話が範囲外になるなら確認する（基準27）
+        // 評価・一言感想・タイトルのある話が範囲外になるなら確認する（基準27）
         const lost = episodesLostOnShrink(season, v.episodeCount);
         if (lost.length > 0) {
           const proceed = await dialog.confirm({
             title: `第${v.episodeCount + 1}〜${season.episodeCount}話の評価が消えます`,
-            message: `${lost.map(episodeLabel).join("・")}に評価や一言感想が付いています。話数を${v.episodeCount}にすると、元に戻せません。`,
+            message: `${lost.map(episodeLabel).join("・")}に評価・一言感想・タイトルのどれかが付いています。話数を${v.episodeCount}にすると、それらは消え、元に戻せません。`,
             confirmLabel: `${v.episodeCount}話にする`,
             destructive: true,
           });

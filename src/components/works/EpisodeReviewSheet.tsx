@@ -4,15 +4,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { setEpisodeReview } from "@/api/works";
 import { useSave } from "@/api/useSave";
 import type { Rating, Season } from "@/domain/types";
-import { episodeLabel } from "@/domain/labels";
+import { episodeHeading } from "@/domain/labels";
 import { findEpisodeReview, isEmptyEpisodeReview, normalizeReviewText } from "@/domain/reviews";
 import { StarInput } from "@/components/common/StarRating";
 import { Button, Field, Input } from "@/components/common/ui";
 import { color, HIT_SIZE, radius, spacing, text } from "@/theme/tokens";
 
 /**
- * EP 話の評価（基準7・25）。シーズンの評価とは独立に保存する。
- * 評価も一言感想も空で保存すると、その話は「未評価」に戻る
+ * EP 話の評価（基準7・25）とタイトル。シーズンの評価とは独立に保存する。
+ * 評価・一言感想・タイトルを全部空で保存すると、その話の記録は消える
  */
 export function EpisodeReviewSheet(props: { season: Season; number: number | null; onClose: () => void }) {
   return (
@@ -31,13 +31,15 @@ function SheetBody({ season, number, onClose }: { season: Season; number: number
   const existing = findEpisodeReview(season, number);
   const [rating, setRating] = useState<Rating | null>(existing?.rating ?? null);
   const [comment, setComment] = useState(existing?.comment ?? "");
+  const [title, setTitle] = useState(existing?.title ?? "");
 
   async function onSave() {
-    const normalized = normalizeReviewText(comment);
-    const clearing = isEmptyEpisodeReview(rating, normalized);
+    const normalizedComment = normalizeReviewText(comment);
+    const normalizedTitle = normalizeReviewText(title);
+    const clearing = isEmptyEpisodeReview(rating, normalizedComment, normalizedTitle);
     const ok = await run(
-      () => setEpisodeReview(season.id, number, rating, normalized),
-      clearing ? "未評価に戻しました" : "保存しました",
+      () => setEpisodeReview(season.id, number, { rating, comment: normalizedComment, title: normalizedTitle }),
+      clearing ? "話の記録を消しました" : "保存しました",
       "話の評価を保存できませんでした"
     );
     if (ok) onClose();
@@ -49,11 +51,16 @@ function SheetBody({ season, number, onClose }: { season: Season; number: number
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={styles.head}>
-            <Text style={styles.title}>{episodeLabel(number)}</Text>
+            <Text style={styles.title} numberOfLines={1}>
+              {episodeHeading(number, normalizeReviewText(title))}
+            </Text>
             <Pressable accessibilityRole="button" onPress={onClose} hitSlop={8} style={styles.close}>
               <Text style={styles.closeLabel}>閉じる</Text>
             </Pressable>
           </View>
+          <Field label="タイトル（任意）">
+            <Input value={title} onChangeText={setTitle} placeholder="例: 南西へ" />
+          </Field>
           <Field label="評価（任意）">
             <StarInput value={rating} onChange={setRating} />
           </Field>
@@ -77,7 +84,7 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  title: { fontSize: text.title, fontWeight: "700", color: color.ink },
+  title: { flex: 1, fontSize: text.title, fontWeight: "700", color: color.ink },
   close: { minHeight: HIT_SIZE, justifyContent: "center" },
   closeLabel: { color: color.brand, fontSize: text.body, fontWeight: "700" },
   comment: { minHeight: 72, paddingTop: spacing.md, textAlignVertical: "top" },

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { episodeLabel } from "@/domain/labels";
+import { episodeHeading } from "@/domain/labels";
 import { commentPreview, findEpisodeReview } from "@/domain/reviews";
 import { episodeNumbers } from "@/domain/works";
 import type { Season, Work } from "@/domain/types";
@@ -59,10 +59,17 @@ function Detail({ work, season }: { work: Work; season: Season }) {
               onPress={() => setOpenNumber(item)}
               style={({ pressed }) => [styles.episode, pressed && { opacity: 0.7 }]}
             >
-              <Text style={styles.episodeLabel}>{episodeLabel(item)}</Text>
-              <Text style={styles.comment} numberOfLines={1}>
-                {commentPreview(review?.comment ?? null)}
-              </Text>
+              {/* タイトルがあれば「第3話 南西へ」。一言感想はその下の行 */}
+              <View style={styles.episodeText}>
+                <Text style={styles.episodeHeading} numberOfLines={1}>
+                  {episodeHeading(item, review?.title ?? null)}
+                </Text>
+                {review?.comment ? (
+                  <Text style={styles.comment} numberOfLines={1}>
+                    {commentPreview(review.comment)}
+                  </Text>
+                ) : null}
+              </View>
               <StarDisplay rating={review?.rating ?? null} size={text.caption} />
             </Pressable>
           );
@@ -89,11 +96,13 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     minHeight: 48,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: color.line,
     backgroundColor: color.surface,
   },
-  episodeLabel: { width: 56, fontSize: text.label, color: color.muted },
-  comment: { flex: 1, fontSize: text.label, color: color.ink },
+  episodeText: { flex: 1, gap: 2 },
+  episodeHeading: { fontSize: text.body, color: color.ink },
+  comment: { fontSize: text.caption, color: color.muted },
 });

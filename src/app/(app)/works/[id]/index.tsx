@@ -7,6 +7,7 @@ import type { Work } from "@/domain/types";
 import { StarDisplay } from "@/components/common/StarRating";
 import { Button, Header, Screen, SectionTitle } from "@/components/common/ui";
 import { ReviewSummary } from "@/components/works/ReviewSummary";
+import { SeriesRatingEditor } from "@/components/works/SeriesRating";
 import { WorkGate } from "@/components/works/WorkGate";
 import { color, radius, spacing, text } from "@/theme/tokens";
 
@@ -39,6 +40,8 @@ function Detail({ work }: { work: Work }) {
 
         {hasSeasons(work.type) ? (
           <>
+            <SectionTitle>作品全体の評価</SectionTitle>
+            <SeriesRatingEditor work={work} />
             <SectionTitle>シーズン</SectionTitle>
             {work.seasons.map((s) => (
               <Pressable

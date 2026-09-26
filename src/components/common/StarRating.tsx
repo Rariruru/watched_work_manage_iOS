@@ -18,7 +18,21 @@ export function StarDisplay({ rating, size = text.label }: { rating: Rating | nu
  * ★の入力（1〜5）と「評価を外す」（基準7）。
  * 同じ★をもう一度押しても外さない（誤って消えないように。外すのは「評価を外す」だけ）
  */
-export function StarInput({ value, onChange }: { value: Rating | null; onChange: (value: Rating | null) => void }) {
+export function StarInput({
+  value,
+  onChange,
+  clearLabel = "評価を外す",
+  emptyLabel = UNRATED_LABEL,
+  disabled,
+}: {
+  value: Rating | null;
+  onChange: (value: Rating | null) => void;
+  /** 評価を外すボタンの文言（作品全体の評価では「平均に戻す」） */
+  clearLabel?: string;
+  /** 未評価のときに右に出す文言 */
+  emptyLabel?: string;
+  disabled?: boolean;
+}) {
   return (
     <View style={styles.inputRow}>
       <View style={styles.starsRow} accessibilityRole="adjustable" accessibilityLabel={`評価 ${value ?? UNRATED_LABEL}`}>
@@ -28,6 +42,7 @@ export function StarInput({ value, onChange }: { value: Rating | null; onChange:
             accessibilityRole="button"
             accessibilityLabel={`${n}`}
             onPress={() => onChange(n)}
+            disabled={disabled}
             hitSlop={4}
             style={styles.starButton}
           >
@@ -36,11 +51,17 @@ export function StarInput({ value, onChange }: { value: Rating | null; onChange:
         ))}
       </View>
       {value !== null ? (
-        <Pressable accessibilityRole="button" onPress={() => onChange(null)} hitSlop={8} style={styles.clear}>
-          <Text style={styles.clearLabel}>評価を外す</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => onChange(null)}
+          disabled={disabled}
+          hitSlop={8}
+          style={styles.clear}
+        >
+          <Text style={styles.clearLabel}>{clearLabel}</Text>
         </Pressable>
       ) : (
-        <Text style={styles.unrated}>{UNRATED_LABEL}</Text>
+        <Text style={styles.unrated}>{emptyLabel}</Text>
       )}
     </View>
   );
@@ -48,7 +69,7 @@ export function StarInput({ value, onChange }: { value: Rating | null; onChange:
 
 const styles = StyleSheet.create({
   stars: { color: color.star, letterSpacing: 1 },
-  unrated: { color: color.muted, fontSize: text.label },
+  unrated: { color: color.muted, fontSize: text.label, flexShrink: 1 },
   inputRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md },
   starsRow: { flexDirection: "row" },
   starButton: { minWidth: HIT_SIZE, minHeight: HIT_SIZE, alignItems: "center", justifyContent: "center" },

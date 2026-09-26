@@ -3,11 +3,13 @@ import { WATCH_STATUS_LABEL, WORK_TYPE_LABEL } from "@/domain/labels";
 import type { ListRow } from "@/domain/works";
 import type { Rating } from "@/domain/types";
 import { StarDisplay } from "@/components/common/StarRating";
+import { SeriesRatingDisplay } from "./SeriesRating";
 import { color, radius, spacing, text } from "@/theme/tokens";
 
 /**
  * 作品一覧の1行（B / B-s）。
- * アニメ・ドラマの「作品ごと」の行には作品全体の評価を出さない（作品全体の評価は持たない）
+ * アニメ・ドラマの「作品ごと」の行は、作品全体の評価（手動か、シーズンの平均）を出す
+ * （2026-09-26 上田の決定。前は作品全体の評価を出さなかった）
  */
 export function WorkListRow({ row, onPress }: { row: ListRow; onPress: () => void }) {
   const { title, sub, rating } = describe(row);
@@ -23,13 +25,17 @@ export function WorkListRow({ row, onPress }: { row: ListRow; onPress: () => voi
           {title}
         </Text>
         <Text style={styles.sub}>{sub}</Text>
-        {rating !== undefined && <StarDisplay rating={rating} size={text.caption} />}
+        {row.kind === "series" ? (
+          <SeriesRatingDisplay work={row.work} />
+        ) : (
+          rating !== undefined && <StarDisplay rating={rating} size={text.caption} />
+        )}
       </View>
     </Pressable>
   );
 }
 
-/** rating が undefined の行は★の欄ごと出さない（作品ごと表示のアニメ・ドラマ） */
+/** 映画・シーズンの行の評価。作品ごと表示のアニメ・ドラマは SeriesRatingDisplay で出す */
 function describe(row: ListRow): { title: string; sub: string; rating?: Rating | null } {
   const type = WORK_TYPE_LABEL[row.work.type];
   switch (row.kind) {
