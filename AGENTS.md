@@ -14,8 +14,9 @@
 - `./docs/traps.md` — 実装で踏んだ罠（持ち主は Claude）。計画を書くときに、ここに載っている罠を避ける順序にする
 
 ## UIモック
-- https://claude.ai/artifact/DczPJBtEZHrgcmJPHEChbf （同じ内容: `docs/design/wireframe-v2.html`）
-- 2026-09-26 時点の第2版。**実装の正ではない**。要件の抜けを探すためのもので、正は `requirements.md` と `contracts.md`
+- https://claude.ai/artifact/DczPJBtEZHrgcmJPHEChbf （同じ内容: `docs/design/wireframe-v3.html`。過去版: `docs/design/wireframe-v2.html`）
+- 2026-09-26 時点の第3版。**実装の正ではない**。要件の抜けを探すためのもので、正は `requirements.md` と `contracts.md`
+- 公開 Artifact を更新できるのは Claude 側だけ。新しい版は `docs/design/wireframe-v<N>.html` として push し、連絡ファイルで Claude に公開を頼む
 
 ## Codex が書くもの
 - `docs/requirements.md`: 受け入れ基準は「〈条件〉のとき、〈観測できる結果〉になる」の形で、番号を付ける。変えたら末尾の「変更履歴」に日付と理由を書く
