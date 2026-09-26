@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import Constants from "expo-constants";
 import { requireOptionalNativeModule } from "expo";
@@ -8,6 +8,15 @@ import { LegalLinks } from "@/components/common/LegalLinks";
 import { Banner, Screen } from "@/components/common/ui";
 import { toAppError } from "@/api/errors";
 import { color, HIT_SIZE, radius, spacing, text } from "@/theme/tokens";
+
+/**
+ * ⚠️ 開発用ログインは __DEV__ のときだけ require する。
+ *    普通に import すると、画面に出なくても部品のコードが本番のビルドに入る（2026-09-26 に Web の本番ビルドで確認）
+ */
+const DevEmailLogin: React.ComponentType | null = __DEV__
+  ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("@/components/sign-in/DevEmailLogin").DevEmailLogin
+  : null;
 
 /**
  * Apple でサインインが使えるか。
@@ -77,7 +86,8 @@ export default function SignIn() {
 
   return (
     <Screen>
-      <View style={styles.body}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.icon} />
         {/* アプリ名は app.json の name が正（仮の名前。requirements.md 未決事項） */}
         <Text style={styles.title}>{Constants.expoConfig?.name ?? ""}</Text>
@@ -116,14 +126,18 @@ export default function SignIn() {
           </Banner>
         )}
 
+        {/* ⚠️ 開発中だけ。本番のビルドでは __DEV__ が false になり、この部品ごと出ない */}
+        {DevEmailLogin && <DevEmailLogin />}
+
         <LegalLinks />
-      </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  body: { flex: 1, justifyContent: "center", padding: spacing.xl, gap: spacing.lg },
+  body: { flexGrow: 1, justifyContent: "center", padding: spacing.xl, gap: spacing.lg },
   icon: { width: 72, height: 72, borderRadius: radius.lg, backgroundColor: color.brandSoft, alignSelf: "center" },
   title: { fontSize: text.heading, fontWeight: "700", color: color.ink, textAlign: "center" },
   lead: { fontSize: text.label, color: color.muted, textAlign: "center", lineHeight: 20 },

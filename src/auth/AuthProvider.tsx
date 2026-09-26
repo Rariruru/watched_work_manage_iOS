@@ -12,6 +12,11 @@ type AuthState = {
   isRestoring: boolean;
   /** キャンセルされたら false。失敗は AppError を投げる */
   signInWithApple: () => Promise<boolean>;
+  /**
+   * ⚠️ 開発中（__DEV__）だけ使う。Expo Go では Apple でサインインできないため（traps.md）。
+   *    本番のサインインは Apple だけ（requirements.md 非スコープ「Apple 以外のログイン」）
+   */
+  signInWithPasswordForDev: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   /** 失敗したら AppError を投げ、サインイン状態のまま残る */
   deleteAccount: () => Promise<void>;
@@ -75,6 +80,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .catch((e: unknown) => ({ error: e }));
         if (error) throw toAppError(error, "Apple でサインインできませんでした");
         return true;
+      },
+
+      async signInWithPasswordForDev(email, password) {
+        if (!__DEV__) throw new Error("開発用のログインは本番では使えない");
+        const { error } = await supabase.auth
+          .signInWithPassword({ email: email.trim(), password })
+          .catch((e: unknown) => ({ error: e }));
+        if (error) {
+          const message = String((error as { message?: unknown }).message ?? "");
+          if (message.includes("Invalid login credentials")) {
+            throw toAppError(error, "メールアドレスかパスワードが違います");
+          }
+          throw toAppError(error, "ログインできませんでした");
+        }
       },
 
       async signOut() {
