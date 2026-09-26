@@ -13,6 +13,10 @@
 - `./docs/contracts.md` — データ契約とドメイン用語。持ち主は Codex。**単位・綴り・必須項目・集計の定義はここが正**
 - `./docs/traps.md` — 実装で踏んだ罠（持ち主は Claude）。計画を書くときに、ここに載っている罠を避ける順序にする
 
+## UIモック
+- https://claude.ai/artifact/DczPJBtEZHrgcmJPHEChbf （同じ内容: `docs/design/wireframe-v2.html`）
+- 2026-09-26 時点の第2版。**実装の正ではない**。要件の抜けを探すためのもので、正は `requirements.md` と `contracts.md`
+
 ## Codex が書くもの
 - `docs/requirements.md`: 受け入れ基準は「〈条件〉のとき、〈観測できる結果〉になる」の形で、番号を付ける。変えたら末尾の「変更履歴」に日付と理由を書く
 - `docs/contracts.md`: 列挙値・必須項目・上限・削除の連鎖。決めていないものは「未定」と書き、推測で埋めない
