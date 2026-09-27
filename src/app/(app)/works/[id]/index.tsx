@@ -1,14 +1,17 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { WATCH_STATUS_LABEL, WORK_TYPE_LABEL } from "@/domain/labels";
+import { useRecords } from "@/api/queries";
+import { toAppError } from "@/api/errors";
+import { RECORD_KIND_LABEL, WATCH_STATUS_LABEL, WORK_TYPE_LABEL } from "@/domain/labels";
 import { hasSeasons } from "@/domain/works";
-import { DEFAULT_WATCH_STATUS } from "@/domain/types";
+import { DEFAULT_WATCH_STATUS, RECORD_KINDS } from "@/domain/types";
 import type { Work } from "@/domain/types";
 import { StarDisplay } from "@/components/common/StarRating";
-import { Button, Header, Screen, SectionTitle } from "@/components/common/ui";
+import { Banner, Button, Header, Screen, SectionTitle } from "@/components/common/ui";
 import { ReviewSummary } from "@/components/works/ReviewSummary";
 import { SeriesRatingEditor } from "@/components/works/SeriesRating";
 import { WorkGate } from "@/components/works/WorkGate";
+import { RecordCard } from "@/components/records/RecordCard";
 import { color, radius, spacing, text } from "@/theme/tokens";
 
 /** D 作品詳細（アニメ・ドラマ = D-a / 映画 = D-m） */
@@ -19,6 +22,7 @@ export default function WorkDetail() {
 
 function Detail({ work }: { work: Work }) {
   const router = useRouter();
+  const records = useRecords(work.id);
   return (
     <Screen>
       <Header
@@ -79,6 +83,34 @@ function Detail({ work }: { work: Work }) {
             />
           </>
         )}
+
+        <SectionTitle>写真付き記録</SectionTitle>
+        {records.isPending ? <Text style={styles.sub}>読み込み中…</Text> : null}
+        {records.isError && !records.data ? (
+          <>
+            <Banner tone="error">{toAppError(records.error, "記録を読み込めませんでした").message}</Banner>
+            <Button label="再試行" variant="secondary" small onPress={() => records.refetch()} />
+          </>
+        ) : null}
+        {records.data?.length === 0 ? <Text style={styles.sub}>まだ記録がありません</Text> : null}
+        {records.data?.map((record) => (
+          <RecordCard
+            key={record.id}
+            record={record}
+            onPress={() => router.push({ pathname: "/records/[id]", params: { id: record.id } })}
+          />
+        ))}
+        <View style={styles.recordActions}>
+          {RECORD_KINDS.map((kind) => (
+            <Button
+              key={kind}
+              label={`＋ ${RECORD_KIND_LABEL[kind]}`}
+              variant="secondary"
+              small
+              onPress={() => router.push({ pathname: "/records/new", params: { workId: work.id, kind } })}
+            />
+          ))}
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -100,4 +132,5 @@ const styles = StyleSheet.create({
   },
   seasonHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   seasonName: { fontSize: text.body, fontWeight: "700", color: color.ink },
+  recordActions: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
 });

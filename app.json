@@ -26,6 +26,20 @@
       "expo-apple-authentication",
       "expo-web-browser",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "作品の記録に写真を追加するため、写真ライブラリへのアクセスを使用します。",
+          "cameraPermission": "作品の記録に写真を追加するため、カメラへのアクセスを使用します。",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "聖地巡礼やイベントの位置を記録するため、現在地を使用します。"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#EEF2EF",

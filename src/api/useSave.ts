@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import { AppError, OFFLINE_MESSAGE, toAppError } from "./errors";
-import { invalidateWorks } from "./queries";
+import { invalidateRecords, invalidateWorks } from "./queries";
 import { useToast } from "@/components/common/toast";
 
 /**
@@ -23,7 +23,7 @@ export function useSave() {
         // ⚠️ isConnected が null（判定できない）のときは送ってみる。false のときだけ止める
         if (net?.isConnected === false) throw new AppError("offline", OFFLINE_MESSAGE);
         await fn();
-        await invalidateWorks();
+        await Promise.all([invalidateWorks(), invalidateRecords()]);
         toast.success(successMessage);
         return true;
       } catch (e) {

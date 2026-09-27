@@ -9,6 +9,7 @@ import { toRating } from "@/domain/reviews";
  */
 
 type EpisodeRow = { number: number; rating: number | null; comment: string | null; title: string | null };
+type WorkRecordPhotoRow = { record_photos: { storage_path: string }[] | null };
 
 type SeasonRow = {
   id: string;
@@ -140,7 +141,19 @@ export async function changeWorkType(id: string, type: WorkType): Promise<void> 
 }
 
 export async function deleteWork(id: string): Promise<void> {
+  // DBの連鎖削除ではStorage実体は消えないため、削除前にパスだけ控える。
+  const photoRows = await run("作品の写真を確認できませんでした", () =>
+    supabase.from("records").select("record_photos(storage_path)").eq("work_id", id)
+  );
+  const photoPaths = ((photoRows ?? []) as unknown as WorkRecordPhotoRow[]).flatMap((record) =>
+    (record.record_photos ?? []).map((photo) => photo.storage_path)
+  );
   await run("作品を削除できませんでした", () => supabase.from("works").delete().eq("id", id));
+  if (photoPaths.length > 0) {
+    const { error } = await supabase.storage.from("record-photos").remove(photoPaths);
+    // DB削除は完了済み。成功通知を誤って失敗へ戻さず、運用で追えるよう警告を残す。
+    if (error) console.warn("[works] 削除済み作品の写真をStorageから削除できなかった", photoPaths, error);
+  }
 }
 
 export async function addSeason(input: {
@@ -233,7 +246,7 @@ export async function saveSeriesRating(workId: string, rating: Rating | null): P
   );
 }
 
-/** アカウント削除。作品・シーズン・各話の評価は DB の on delete cascade で消える */
+/** アカウント削除。Edge Functionが写真を消してからauth.usersを削除し、DBは連鎖削除される */
 export async function deleteAccount(): Promise<void> {
-  await run("削除できませんでした。記録は残っています", () => supabase.rpc("delete_account"));
+  await run("削除できませんでした。記録は残っています", () => supabase.functions.invoke("delete-account"));
 }

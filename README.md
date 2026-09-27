@@ -1,7 +1,7 @@
 # 観た作品ノート（仮）
 
 アニメ・ドラマ・映画の感想・評価と、聖地巡礼・グッズ・イベントの記録を残す iOS アプリ。
-何を作るかは `docs/requirements.md`、共同開発のルールは `docs/collaboration.md`。
+何を作るかは `docs/requirements.md`、開発のルールは `docs/collaboration.md`。
 
 - アプリ: Expo（SDK 57）＋ Expo Router ＋ TypeScript。画面は `src/app/`
 - サーバ: Supabase（DB・Apple でサインイン）。スキーマは `supabase/migrations/`
@@ -32,6 +32,13 @@ npm install
 1. https://supabase.com でプロジェクトを作る
 2. SQL Editor で `supabase/migrations/` の SQL をファイル名の順に実行する
 3. Project Settings > API から Project URL と anon key を控える（service_role key はアプリに入れない）
+4. `supabase/functions/delete-account` をデプロイする。アカウント削除時に非公開Storageの写真を先に削除するために必要
+
+```bash
+supabase functions deploy delete-account
+```
+
+`20260927000000_records_and_photos.sql` は非公開の `record-photos` バケットも作る。本番へSQLとFunctionを適用するのは人間が行う。
 
 ### 3. 接続先を設定する
 
@@ -95,4 +102,4 @@ EAS の環境変数に、ファイルから読ませて設定する。対話プ�
 ### 6. 本人の行しか読めないことを確かめる
 
 アカウントが1人分以上ある状態で、`supabase/tests/rls_check.sql` の全文を SQL Editor に貼ってそのまま実行する（受け入れ基準14）。
-仮の「他人」を作って試し、最後にすべて取り消す。結果の1行の `verdict` が `OK` なら、他人の作品・シーズンは読めず、書き換えられない。
+仮の「他人」を作って試し、最後にすべて取り消す。結果の1行の `verdict` が `OK` なら、他人の作品・シーズン・各話・写真付き記録は読めず、書き換えられない。

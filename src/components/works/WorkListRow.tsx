@@ -11,8 +11,8 @@ import { color, radius, spacing, text } from "@/theme/tokens";
  * アニメ・ドラマの「作品ごと」の行は、作品全体の評価（手動か、シーズンの平均）を出す
  * （2026-09-26 上田の決定。前は作品全体の評価を出さなかった）
  */
-export function WorkListRow({ row, onPress }: { row: ListRow; onPress: () => void }) {
-  const { title, sub, rating } = describe(row);
+export function WorkListRow({ row, onPress, recordCount }: { row: ListRow; onPress: () => void; recordCount?: number }) {
+  const { title, sub, rating } = describe(row, recordCount);
   return (
     <Pressable
       accessibilityRole="button"
@@ -36,23 +36,24 @@ export function WorkListRow({ row, onPress }: { row: ListRow; onPress: () => voi
 }
 
 /** 映画・シーズンの行の評価。作品ごと表示のアニメ・ドラマは SeriesRatingDisplay で出す */
-function describe(row: ListRow): { title: string; sub: string; rating?: Rating | null } {
+function describe(row: ListRow, recordCount?: number): { title: string; sub: string; rating?: Rating | null } {
   const type = WORK_TYPE_LABEL[row.work.type];
+  const records = recordCount === undefined ? null : `記録${recordCount}件`;
   switch (row.kind) {
     case "movie":
       return {
         title: row.work.title,
-        sub: [type, row.work.status ? WATCH_STATUS_LABEL[row.work.status] : null].filter(Boolean).join(" · "),
+        sub: [type, row.work.status ? WATCH_STATUS_LABEL[row.work.status] : null, records].filter(Boolean).join(" · "),
         rating: row.work.rating,
       };
     case "series":
-      return { title: row.work.title, sub: `${type} · ${row.seasonCount}シーズン` };
+      return { title: row.work.title, sub: [type, `${row.seasonCount}シーズン`, records].filter(Boolean).join(" · ") };
     case "season":
       return {
         title: `${row.work.title} ${row.season.name}`,
         sub: `${type} · ${WATCH_STATUS_LABEL[row.season.status]} · ${
           row.season.episodeCount > 0 ? `全${row.season.episodeCount}話` : "話数未入力"
-        }`,
+        }${records ? ` · ${records}` : ""}`,
         rating: row.season.rating,
       };
   }

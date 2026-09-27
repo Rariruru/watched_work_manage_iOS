@@ -1,4 +1,4 @@
-import type { WatchStatus, WorkType } from "./types";
+import type { RecordKind, WatchStatus, WorkType } from "./types";
 
 /** 画面に出す日本語の名前。同じ文言をほかのファイルに書かないこと */
 export const WORK_TYPE_LABEL: Record<WorkType, string> = {
@@ -11,6 +11,12 @@ export const WATCH_STATUS_LABEL: Record<WatchStatus, string> = {
   want: "観たい",
   watching: "観ている",
   watched: "観た",
+};
+
+export const RECORD_KIND_LABEL: Record<RecordKind, string> = {
+  pilgrimage: "聖地巡礼",
+  goods: "グッズ",
+  event: "イベント",
 };
 
 export function episodeLabel(n: number): string {

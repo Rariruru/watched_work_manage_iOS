@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { createWork } from "@/api/works";
 import { useWorks } from "@/api/queries";
 import { useSave } from "@/api/useSave";
@@ -16,6 +16,7 @@ import { spacing } from "@/theme/tokens";
 /** C 作品の追加（受け入れ基準4・5・18・23） */
 export default function NewWork() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ returnTo?: string; recordKind?: string }>();
   const dialog = useDialog();
   const works = useWorks();
   const { run, saving } = useSave();
@@ -55,7 +56,13 @@ export default function NewWork() {
       "保存しました",
       "作品を保存できませんでした"
     );
-    if (ok && createdId) router.replace({ pathname: "/works/[id]", params: { id: createdId } });
+    if (ok && createdId) {
+      if (params.returnTo === "record") {
+        router.replace({ pathname: "/records/new", params: { workId: createdId, kind: params.recordKind ?? "pilgrimage" } });
+      } else {
+        router.replace({ pathname: "/works/[id]", params: { id: createdId } });
+      }
+    }
   }
 
   return (

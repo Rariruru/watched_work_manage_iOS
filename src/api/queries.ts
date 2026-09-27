@@ -1,6 +1,7 @@
 import { QueryClient, useQuery } from "@tanstack/react-query";
 import { fetchWorks } from "./works";
-import type { Work } from "@/domain/types";
+import { fetchRecords } from "./records";
+import type { Work, WorkRecord } from "@/domain/types";
 
 /**
  * ⚠️ キャッシュは端末に永続化しない（persist しない）。
@@ -21,9 +22,25 @@ export const queryClient = new QueryClient({
 });
 
 export const worksKey = ["works"] as const;
+export const recordsKey = ["records"] as const;
 
 export function useWorks() {
   return useQuery({ queryKey: worksKey, queryFn: fetchWorks });
+}
+
+export function useRecords(workId?: string) {
+  return useQuery({
+    queryKey: [...recordsKey, workId ?? "all"],
+    queryFn: () => fetchRecords(workId),
+  });
+}
+
+export function useRecord(id: string | undefined): {
+  record: WorkRecord | undefined;
+  query: ReturnType<typeof useRecords>;
+} {
+  const query = useRecords();
+  return { record: query.data?.find((record) => record.id === id), query };
 }
 
 /** 一覧のキャッシュから1作品を引く。無ければ undefined（読み込み中か、削除済みか） */
@@ -34,4 +51,8 @@ export function useWork(id: string | undefined): { work: Work | undefined; query
 
 export function invalidateWorks(): Promise<void> {
   return queryClient.invalidateQueries({ queryKey: worksKey });
+}
+
+export function invalidateRecords(): Promise<void> {
+  return queryClient.invalidateQueries({ queryKey: recordsKey });
 }

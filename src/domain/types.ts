@@ -16,6 +16,30 @@ export const DEFAULT_WATCH_STATUS: WatchStatus = "watched";
 export const RATINGS = [1, 2, 3, 4, 5] as const;
 export type Rating = (typeof RATINGS)[number];
 
+export const RECORD_KINDS = ["pilgrimage", "goods", "event"] as const;
+export type RecordKind = (typeof RECORD_KINDS)[number];
+
+export type RecordPhoto = {
+  id: string;
+  storagePath: string;
+  position: number;
+  /** 非公開Storageの期限付きURL。取得できなかったときは null */
+  url: string | null;
+};
+
+export type WorkRecord = {
+  id: string;
+  workId: string;
+  kind: RecordKind;
+  name: string;
+  occurredOn: string | null;
+  memo: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  createdAt: string;
+  photos: RecordPhoto[];
+};
+
 /** 各話の評価・一言感想・タイトル。どれかがある話だけが存在する（無い話は未評価・タイトルなし） */
 export type EpisodeReview = {
   number: number;

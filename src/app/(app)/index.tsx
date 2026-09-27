@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { useWorks } from "@/api/queries";
+import { useRecords, useWorks } from "@/api/queries";
 import { toAppError } from "@/api/errors";
 import { buildListRows, isFiltered } from "@/domain/works";
 import type { ListFilter, ListMode } from "@/domain/works";
@@ -16,6 +16,7 @@ const NO_FILTER: ListFilter = { type: "all", status: "all" };
 export default function WorkList() {
   const router = useRouter();
   const works = useWorks();
+  const records = useRecords();
   const [mode, setMode] = useState<ListMode>("work");
   const [filter, setFilter] = useState<ListFilter>(NO_FILTER);
 
@@ -23,12 +24,18 @@ export default function WorkList() {
     () => (works.data ? buildListRows(works.data, mode, filter) : []),
     [works.data, mode, filter]
   );
+  const recordCounts = useMemo(() => {
+    if (!records.data) return new Map<string, number>();
+    const counts = new Map<string, number>();
+    for (const record of records.data) counts.set(record.workId, (counts.get(record.workId) ?? 0) + 1);
+    return counts;
+  }, [records.data]);
 
   const header = (
     <Header
       title="作品"
       left={{ label: "設定", onPress: () => router.push("/settings") }}
-      right={{ label: "＋ 追加", onPress: () => router.push("/works/new") }}
+      right={{ label: "＋ 追加", onPress: () => router.push("/add") }}
     />
   );
 
@@ -93,6 +100,7 @@ export default function WorkList() {
         renderItem={({ item }) => (
           <WorkListRow
             row={item}
+            recordCount={records.data ? (recordCounts.get(item.work.id) ?? 0) : undefined}
             onPress={() =>
               item.kind === "season"
                 ? router.push({ pathname: "/seasons/[id]", params: { id: item.season.id } })
