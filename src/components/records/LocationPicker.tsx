@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Linking, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Linking, Platform, StyleSheet, View } from "react-native";
 import * as Location from "expo-location";
 import MapView, { Marker, type MapPressEvent } from "react-native-maps";
 import { Banner, Button } from "@/components/common/ui";
@@ -7,12 +7,74 @@ import { radius, spacing } from "@/theme/tokens";
 
 type LocationValue = { latitude: number; longitude: number } | null;
 
-export function LocationPicker(props: { value: LocationValue; onChange: (value: LocationValue) => void; disabled?: boolean }) {
+type GeocodeState = "idle" | "searching" | "found" | "not-found" | "error";
+
+export function LocationPicker(props: {
+  value: LocationValue;
+  onChange: (value: LocationValue) => void;
+  disabled?: boolean;
+  autoGeocode?: boolean;
+  searchText?: string;
+}) {
+  const { autoGeocode, disabled, onChange, searchText, value } = props;
+  const mapRef = useRef<MapView>(null);
+  const lastSearchedName = useRef(searchText?.trim() ?? "");
+  const geocodeVersion = useRef(0);
   const [permissionDenied, setPermissionDenied] = useState(false);
-  const [error, setError] = useState(false);
+  const [currentLocationError, setCurrentLocationError] = useState(false);
+  const [geocodeState, setGeocodeState] = useState<GeocodeState>("idle");
+
+  useEffect(() => {
+    if (!value) return;
+    mapRef.current?.animateToRegion({
+      ...value,
+      latitudeDelta: 0.08,
+      longitudeDelta: 0.08,
+    });
+  }, [value]);
+
+  useEffect(() => {
+    const placeName = searchText?.trim() ?? "";
+    if (!autoGeocode || disabled || placeName === "" || placeName === lastSearchedName.current) return;
+
+    const version = ++geocodeVersion.current;
+    setGeocodeState("searching");
+    const timer = setTimeout(async () => {
+      lastSearchedName.current = placeName;
+      try {
+        if (Platform.OS === "android") {
+          const permission = await Location.requestForegroundPermissionsAsync();
+          if (!permission.granted) {
+            if (version === geocodeVersion.current) {
+              setPermissionDenied(true);
+              setGeocodeState("error");
+            }
+            return;
+          }
+        }
+        const [match] = await Location.geocodeAsync(placeName);
+        if (version !== geocodeVersion.current) return;
+        if (!match) {
+          setGeocodeState("not-found");
+          return;
+        }
+        onChange({ latitude: match.latitude, longitude: match.longitude });
+        setGeocodeState("found");
+      } catch (cause) {
+        if (version !== geocodeVersion.current) return;
+        console.warn("[records] 場所名から位置を検索できなかった", placeName, cause);
+        setGeocodeState("error");
+      }
+    }, 900);
+    return () => {
+      clearTimeout(timer);
+      if (geocodeVersion.current === version) geocodeVersion.current += 1;
+    };
+  }, [autoGeocode, disabled, onChange, searchText]);
 
   async function useCurrent() {
-    setError(false);
+    setCurrentLocationError(false);
+    setGeocodeState("idle");
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (!permission.granted) {
@@ -21,31 +83,33 @@ export function LocationPicker(props: { value: LocationValue; onChange: (value: 
       }
       setPermissionDenied(false);
       const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      props.onChange({ latitude: current.coords.latitude, longitude: current.coords.longitude });
+      onChange({ latitude: current.coords.latitude, longitude: current.coords.longitude });
     } catch (cause) {
       console.warn("[records] 現在地を取得できなかった", cause);
-      setError(true);
+      setCurrentLocationError(true);
     }
   }
 
   function select(event: MapPressEvent) {
-    props.onChange(event.nativeEvent.coordinate);
+    setGeocodeState("idle");
+    onChange(event.nativeEvent.coordinate);
   }
 
-  const center = props.value ?? { latitude: 35.681236, longitude: 139.767125 };
+  const center = value ?? { latitude: 35.681236, longitude: 139.767125 };
   return (
     <View style={styles.root}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         initialRegion={{ ...center, latitudeDelta: 0.08, longitudeDelta: 0.08 }}
         onPress={select}
-        scrollEnabled={!props.disabled}
+        scrollEnabled={!disabled}
       >
-        {props.value ? <Marker coordinate={props.value} /> : null}
+        {value ? <Marker coordinate={value} /> : null}
       </MapView>
       <View style={styles.actions}>
-        <Button label="現在地を使う" variant="secondary" small onPress={useCurrent} disabled={props.disabled} />
-        {props.value ? <Button label="位置を外す" variant="secondary" small onPress={() => props.onChange(null)} disabled={props.disabled} /> : null}
+        <Button label="現在地を使う" variant="secondary" small onPress={useCurrent} disabled={disabled} />
+        {value ? <Button label="位置を外す" variant="secondary" small onPress={() => { setGeocodeState("idle"); onChange(null); }} disabled={disabled} /> : null}
       </View>
       {permissionDenied ? (
         <View style={styles.permission}>
@@ -53,7 +117,11 @@ export function LocationPicker(props: { value: LocationValue; onChange: (value: 
           <Button label="設定を開く" variant="secondary" small onPress={() => Linking.openSettings()} />
         </View>
       ) : null}
-      {error ? <Banner tone="error">現在地を取得できませんでした。地図をタップして選べます。</Banner> : null}
+      {geocodeState === "searching" ? <Banner tone="info">場所名から位置を検索しています…</Banner> : null}
+      {geocodeState === "found" ? <Banner tone="info">場所名から位置を設定しました。地図タップで修正できます。</Banner> : null}
+      {geocodeState === "not-found" ? <Banner tone="warn">場所が見つかりませんでした。地図をタップして選べます。</Banner> : null}
+      {geocodeState === "error" ? <Banner tone="error">場所名から位置を検索できませんでした。地図をタップして選べます。</Banner> : null}
+      {currentLocationError ? <Banner tone="error">現在地を取得できませんでした。地図をタップして選べます。</Banner> : null}
     </View>
   );
 }

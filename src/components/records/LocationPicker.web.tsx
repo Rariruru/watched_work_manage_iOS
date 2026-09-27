@@ -10,7 +10,13 @@ function numberOrNull(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function LocationPicker(props: { value: LocationValue; onChange: (value: LocationValue) => void; disabled?: boolean }) {
+export function LocationPicker(props: {
+  value: LocationValue;
+  onChange: (value: LocationValue) => void;
+  disabled?: boolean;
+  autoGeocode?: boolean;
+  searchText?: string;
+}) {
   return (
     <View style={styles.row}>
       <Field label="緯度">

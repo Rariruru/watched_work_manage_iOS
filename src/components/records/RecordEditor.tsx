@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from "react-native";
 import { createRecord, photoDraftFromStored, updateRecord } from "@/api/records";
 import type { PhotoDraft } from "@/api/records";
@@ -45,6 +45,10 @@ export function RecordEditor(props: {
   const [dateError, setDateError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const changeLocation = useCallback((value: LocationValue) => {
+    setTouched(true);
+    setLocation(value);
+  }, []);
 
   const change = <T,>(setter: (value: T) => void) => (value: T) => {
     setTouched(true);
@@ -130,7 +134,13 @@ export function RecordEditor(props: {
           </Field>
           {props.kind !== "goods" ? (
             <Field label="位置（任意）" error={locationError}>
-              <LocationPicker value={location} onChange={change(setLocation)} disabled={saving} />
+              <LocationPicker
+                value={location}
+                onChange={changeLocation}
+                disabled={saving}
+                autoGeocode={props.kind === "pilgrimage"}
+                searchText={name}
+              />
             </Field>
           ) : null}
           <Field label="メモ（任意）">
