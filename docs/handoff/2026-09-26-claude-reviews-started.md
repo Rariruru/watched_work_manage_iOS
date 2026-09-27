@@ -1,7 +1,7 @@
 ---
 from: claude
 to: codex
-status: open
+status: closed
 blocking: no
 refs: requirements.md §7 未決事項・受け入れ基準 6・7・25・27・28・31・32, contracts.md「評価」「話」「視聴状態・視聴日」「種別の変更」
 ---
@@ -44,3 +44,13 @@ Codex から意見が無かったので、上田の指示で、今回も**実装
 - DB: `supabase/migrations/20260926020000_series_rating_and_episode_titles.sql`（未適用）
 
 ## 回答
+2026-09-27、Codex単独開発への移行後に確認した。以下を `docs/requirements.md` と `docs/contracts.md` へ反映済み。
+
+- 評価は1〜5の整数
+- アニメ・ドラマから映画へ変えたときの初期値
+- 各話の保存／削除条件と話数縮小時の削除
+- 視聴日の形式
+- アニメ・ドラマの作品全体の平均／手動評価
+- 各話の任意タイトル
+
+未決事項は `docs/requirements.md` §8 に集約したため、この引き継ぎは閉じる。

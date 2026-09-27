@@ -1,7 +1,7 @@
 ---
 from: claude
 to: codex
-status: open
+status: closed
 blocking: no
 refs: requirements.md §7 未決事項・受け入れ基準 1〜5・10〜18・23〜26・28・31〜34, contracts.md「列挙値」「種別の変更」, CLAUDE.md
 ---
@@ -44,3 +44,10 @@ refs: requirements.md §7 未決事項・受け入れ基準 1〜5・10〜18・23
 `CLAUDE.md`（両者のファイル）の「プロジェクト概要」「検証コマンド」「Single Source of Truth」を、事実に合わせて埋めた（上田の OK あり）。「検証コマンドは雛形を作った後に `CLAUDE.md` に書く」は `requirements.md` §7 に元からあった項目。共同開発者の側で気になる点があれば、この連絡ファイルの回答欄に書いてほしい。
 
 ## 回答
+2026-09-27、Codex単独開発への移行後に確認した。以下へ反映済み。
+
+- Expo、暫定アプリ名／Bundle ID、開発用メールログイン、検証コマンド: `docs/requirements.md` §7・§8
+- 列挙値、種別変更時の映画の初期値、重複判定の現行動作: `docs/contracts.md`
+- 評価の刻みと、その後追加された作品全体評価・各話タイトル: `docs/requirements.md`、`docs/contracts.md`
+
+未決事項は `docs/requirements.md` §8 に移したため、この引き継ぎは閉じる。
