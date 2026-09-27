@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { RECORD_KIND_LABEL } from "@/domain/labels";
 import type { Work, WorkRecord } from "@/domain/types";
 import { RecordGate } from "@/components/records/RecordGate";
+import { RecordLocationMap } from "@/components/records/RecordLocationMap";
 import { Header, Screen, SectionTitle } from "@/components/common/ui";
 import { color, radius, spacing, text } from "@/theme/tokens";
 
@@ -33,7 +34,7 @@ function Detail({ record, work }: { record: WorkRecord; work: Work }) {
         {record.latitude !== null && record.longitude !== null ? (
           <>
             <SectionTitle>位置</SectionTitle>
-            <Text style={styles.text}>{record.latitude.toFixed(6)}, {record.longitude.toFixed(6)}</Text>
+            <RecordLocationMap latitude={record.latitude} longitude={record.longitude} />
           </>
         ) : null}
         {record.memo ? (
