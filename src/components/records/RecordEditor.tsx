@@ -1,4 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useNavigation } from "expo-router";
+import { usePreventRemove } from "expo-router/build/react-navigation/core";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from "react-native";
 import { createRecord, photoDraftFromStored, updateRecord } from "@/api/records";
 import type { PhotoDraft } from "@/api/records";
@@ -30,6 +32,7 @@ export function RecordEditor(props: {
   footer?: React.ReactNode;
 }) {
   const dialog = useDialog();
+  const navigation = useNavigation();
   const { run, saving } = useSave();
   const initialDate = props.record?.occurredOn ?? todayString(new Date());
   const [name, setName] = useState(props.record?.name ?? "");
@@ -45,6 +48,8 @@ export function RecordEditor(props: {
   const [dateError, setDateError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const allowRemove = useRef(false);
+  const discardPromptOpen = useRef(false);
   const changeLocation = useCallback((value: LocationValue) => {
     setTouched(true);
     setLocation(value);
@@ -55,16 +60,33 @@ export function RecordEditor(props: {
     setter(value);
   };
 
-  async function close() {
-    if (touched) {
-      const discard = await dialog.confirm({
+  usePreventRemove(touched, ({ data }) => {
+    if (allowRemove.current) {
+      navigation.dispatch(data.action);
+      return;
+    }
+    if (discardPromptOpen.current) return;
+
+    discardPromptOpen.current = true;
+    void dialog
+      .confirm({
         title: "入力を破棄しますか？",
         message: "保存していない内容と写真は消えます。",
         confirmLabel: "破棄する",
         destructive: true,
+      })
+      .then((discard) => {
+        if (!discard) return;
+        allowRemove.current = true;
+        setTouched(false);
+        navigation.dispatch(data.action);
+      })
+      .finally(() => {
+        discardPromptOpen.current = false;
       });
-      if (!discard) return;
-    }
+  });
+
+  function close() {
     props.onCancel();
   }
 
@@ -100,7 +122,11 @@ export function RecordEditor(props: {
       "保存しました",
       "記録を保存できませんでした"
     );
-    if (ok) props.onSaved(savedId);
+    if (ok) {
+      allowRemove.current = true;
+      setTouched(false);
+      props.onSaved(savedId);
+    }
   }
 
   const nameLabel = { pilgrimage: "場所名", goods: "グッズ名", event: "イベント名" }[props.kind];
