@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="ja">
-<!-- 2026-09-27 更新（第3版）の画面設計。実装の正ではない。
+<!-- 2026-10-04 更新（第3版）の画面設計。実装の正ではない。
      正は docs/requirements.md と docs/contracts.md。
      第2版レビュの7件を反映: docs/handoff/2026-09-26-codex-wireframe-v2-review.md -->
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>観た作品と聖地 ワイヤーフレーム 第3版</title>
+  <title>作品日和 ワイヤーフレーム 第3版</title>
   <style>
     :root {
       --ink:#17211c; --muted:#65716a; --line:#d7dfda; --panel:#f7f9f7;
@@ -30,8 +30,8 @@
 <body>
 <header>
   <div class="eyebrow">docs/requirements.md · UI wireframe · 第3版</div>
-  <h1>観た作品と聖地巡礼の記録アプリ</h1>
-  <p class="lead">2026-09-27 更新。iPhone 縦向き・ライト固定を前提に、要件の抜けと画面状態を確認するためのワイヤーフレームです。色・フォント・余白は最終デザインではありません。</p>
+  <h1>作品日和</h1>
+  <p class="lead">2026-10-04 更新。iPhone 縦向き・ライト固定を前提に、要件の抜けと画面状態を確認するためのワイヤーフレームです。色・フォント・余白は最終デザインではありません。</p>
   <div class="notice"><b>実装の正ではありません。</b> 実装判断は <code>docs/contracts.md</code> → <code>docs/requirements.md</code> の順に従います。第3版は第2版レビュの7件をすべて反映しています。</div>
 </header>
 <main>
@@ -54,7 +54,7 @@
     <h2>アートボード</h2>
     <p class="lead">通常状態だけでなく、0件・絞り込み0件・読み込み失敗・通信なし・許可なし・破壊的変更の確認を分けています。</p>
     <div class="boards">
-      <article class="board"><div class="cap"><h3>A サインイン</h3><span class="id">基準1・16</span></div><div class="phone short"><div class="status"></div><div class="screen center"><div class="thumb" style="width:76px;height:76px;border-radius:20px"></div><b>アプリ名（未定）</b><span class="sub">観た作品と、聖地・グッズ・イベントを残す</span><div class="button primary" style="width:90%">Apple でサインイン</div><span class="action">利用規約 · プライバシーポリシー</span></div></div></article>
+      <article class="board"><div class="cap"><h3>A サインイン</h3><span class="id">基準1・16</span></div><div class="phone short"><div class="status"></div><div class="screen center"><div class="thumb" style="width:76px;height:76px;border-radius:20px"></div><b>作品日和</b><span class="sub">観た作品と、聖地・グッズ・イベントを残す</span><div class="button primary" style="width:90%">Apple でサインイン</div><span class="action">利用規約 · プライバシーポリシー</span></div></div></article>
 
       <article class="board"><div class="cap"><h3>B 作品一覧（作品ごと）</h3><span class="id">基準10・28</span></div><div class="phone"><div class="status"></div><div class="nav"><span class="action">設定</span><b>作品</b><span class="action">＋</span></div><div class="screen"><div class="segment"><span class="on">作品ごと</span><span>シーズンごと</span></div><div class="chips"><span class="chip on">すべて</span><span class="chip">アニメ</span><span class="chip">ドラマ</span><span class="chip">映画</span></div><div class="chips"><span class="chip on">すべて</span><span class="chip">観たい</span><span class="chip">観ている</span><span class="chip">観た</span></div><div class="item"><div class="thumb"></div><div class="copy"><b>進撃の巨人</b><span class="sub">アニメ · 4シーズン</span><span class="sub">記録 6件</span></div></div><div class="item"><div class="thumb"></div><div class="copy"><b>すずめの戸締まり</b><span class="sub">映画 · 観た · <span class="stars">★★★★☆</span></span><span class="sub">記録 3件</span></div></div></div></div><p class="note">アニメ・ドラマの行に作品全体の評価は出さない。</p></article>
 

@@ -1,4 +1,4 @@
-# 観た作品ノート（仮）
+# 作品日和
 
 アニメ・ドラマ・映画の感想・評価と、聖地巡礼・グッズ・イベントの記録を残す iOS アプリ。
 何を作るかは `docs/requirements.md`、開発のルールは `docs/collaboration.md`。
@@ -54,8 +54,8 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 
 ### 4. Apple でサインインを有効にする
 
-1. Apple Developer で App ID `com.tiffanysho.watchedwork` を作り、Sign In with Apple を有効にする
-2. Supabase の Authentication > Providers > Apple を有効にし、Client IDs に `com.tiffanysho.watchedwork` を入れる
+1. Apple Developer で App ID `com.tiffanysho.sakuhinbiyori` を作り、Sign In with Apple を有効にする
+2. Supabase の Authentication > Providers > Apple を有効にし、Client IDs に `com.tiffanysho.sakuhinbiyori` を入れる
    - ⚠️ **Expo Go では Apple でサインインできない**（App Store の Expo Go にはこの機能が入っていなかった。2026-09-26 に実機で確認）。試すには手順5の開発用ビルドが要る
 
 Expo Go で開くときは `--go` を付ける（`expo-dev-client` が入っているので、付けないと開発用ビルド向けの QR コードが出て、Expo Go では開けない）。

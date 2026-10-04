@@ -89,7 +89,7 @@ export default function SignIn() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.icon} />
-        {/* アプリ名は app.json の name が正（仮の名前。requirements.md 未決事項） */}
+        {/* アプリ名は app.json の name が正。requirements.md の確定名とそろえる */}
         <Text style={styles.title}>{Constants.expoConfig?.name ?? ""}</Text>
         <Text style={styles.lead}>観た作品の感想と、聖地・グッズ・イベントの記録を残す</Text>
 

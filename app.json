@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "観た作品ノート",
-    "slug": "watched-work-manage",
-    "scheme": "watchedwork",
+    "name": "作品日和",
+    "slug": "sakuhin-biyori",
+    "scheme": "sakuhinbiyori",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.tiffanysho.watchedwork",
+      "bundleIdentifier": "com.tiffanysho.sakuhinbiyori",
       "buildNumber": "1",
       "usesAppleSignIn": true,
       "infoPlist": {
