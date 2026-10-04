@@ -58,6 +58,7 @@ export type Season = {
   episodeCount: number;
   status: WatchStatus;
   watchedOn: string | null;
+  /** 手動評価。null のときは reviews.ts の seasonRating が各話平均を算出する */
   rating: Rating | null;
   review: string | null;
   /** 評価・一言感想・タイトルのどれかがある話だけ。番号の昇順 */

@@ -7,10 +7,10 @@ import { RECORD_KIND_LABEL, WATCH_STATUS_LABEL, WORK_TYPE_LABEL } from "@/domain
 import { hasSeasons } from "@/domain/works";
 import { DEFAULT_WATCH_STATUS, RECORD_KINDS } from "@/domain/types";
 import type { Work } from "@/domain/types";
-import { StarDisplay } from "@/components/common/StarRating";
 import { Banner, Button, Header, Screen, SectionTitle } from "@/components/common/ui";
 import { ReviewSummary } from "@/components/works/ReviewSummary";
 import { SeriesRatingEditor } from "@/components/works/SeriesRating";
+import { SeasonRatingDisplay } from "@/components/works/SeasonRating";
 import { WorkGate } from "@/components/works/WorkGate";
 import { RecordCard } from "@/components/records/RecordCard";
 import { color, radius, spacing, text } from "@/theme/tokens";
@@ -61,7 +61,7 @@ function Detail({ work }: { work: Work }) {
               >
                 <View style={styles.seasonHead}>
                   <Text style={styles.seasonName}>{s.name}</Text>
-                  <StarDisplay rating={s.rating} size={text.caption} />
+                  <SeasonRatingDisplay season={s} size={text.caption} />
                 </View>
                 <Text style={styles.sub}>
                   {WATCH_STATUS_LABEL[s.status]} · {s.episodeCount > 0 ? `全${s.episodeCount}話` : "話数未入力"}

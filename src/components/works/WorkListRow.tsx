@@ -5,6 +5,7 @@ import type { ListRow } from "@/domain/works";
 import type { Rating } from "@/domain/types";
 import { StarDisplay } from "@/components/common/StarRating";
 import { SeriesRatingDisplay } from "./SeriesRating";
+import { SeasonRatingDisplay } from "./SeasonRating";
 import { color, radius, spacing, text } from "@/theme/tokens";
 
 /**
@@ -32,6 +33,8 @@ export function WorkListRow({ row, onPress, recordCount }: { row: ListRow; onPre
         <Text style={styles.sub}>{sub}</Text>
         {row.kind === "series" ? (
           <SeriesRatingDisplay work={row.work} />
+        ) : row.kind === "season" ? (
+          <SeasonRatingDisplay season={row.season} />
         ) : (
           rating !== undefined && <StarDisplay rating={rating} size={text.caption} />
         )}
@@ -40,7 +43,7 @@ export function WorkListRow({ row, onPress, recordCount }: { row: ListRow; onPre
   );
 }
 
-/** 映画・シーズンの行の評価。作品ごと表示のアニメ・ドラマは SeriesRatingDisplay で出す */
+/** 映画は手動評価、シーズンは手動か各話平均、作品ごとは SeriesRatingDisplay で出す */
 function describe(row: ListRow, recordCount?: number): { title: string; sub: string; rating?: Rating | null } {
   const type = WORK_TYPE_LABEL[row.work.type];
   const records = recordCount === undefined ? null : `記録${recordCount}件`;
@@ -59,7 +62,6 @@ function describe(row: ListRow, recordCount?: number): { title: string; sub: str
         sub: `${type} · ${WATCH_STATUS_LABEL[row.season.status]} · ${
           row.season.episodeCount > 0 ? `全${row.season.episodeCount}話` : "話数未入力"
         }${records ? ` · ${records}` : ""}`,
-        rating: row.season.rating,
       };
   }
 }

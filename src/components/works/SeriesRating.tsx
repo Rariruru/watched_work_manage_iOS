@@ -9,7 +9,7 @@ import { color, radius, spacing, text } from "@/theme/tokens";
 
 /**
  * アニメ・ドラマの作品全体の評価の表示。
- * 手動の評価があれば★、無ければ評価の付いたシーズンの平均を「★ 4.5（平均）」で出す
+ * 手動の評価があれば★、無ければ表示評価のあるシーズンの平均を「★ 4.5（平均）」で出す
  */
 export function SeriesRatingDisplay({ work, size = text.caption }: { work: Work; size?: number }) {
   const r = seriesRating(work);
@@ -36,7 +36,7 @@ export function SeriesRatingEditor({ work }: { work: Work }) {
       <View style={styles.row}>
         <SeriesRatingDisplay work={work} size={text.title} />
         <Text style={styles.note}>
-          {r.kind === "manual" ? "手動で付けた評価" : "評価の付いたシーズンの平均"}
+          {r.kind === "manual" ? "手動で付けた評価" : "各シーズンの表示評価の平均"}
         </Text>
       </View>
       <StarInput

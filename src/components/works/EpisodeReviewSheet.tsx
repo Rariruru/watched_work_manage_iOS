@@ -11,7 +11,7 @@ import { Button, Field, Input } from "@/components/common/ui";
 import { color, HIT_SIZE, radius, spacing, text } from "@/theme/tokens";
 
 /**
- * EP 話の評価（基準7・25）とタイトル。シーズンの評価とは独立に保存する。
+ * EP 話の評価（基準7・25・42）とタイトル。保存後はシーズンの自動平均にも反映される。
  * 評価・一言感想・タイトルを全部空で保存すると、その話の記録は消える
  */
 export function EpisodeReviewSheet(props: { season: Season; number: number | null; onClose: () => void }) {

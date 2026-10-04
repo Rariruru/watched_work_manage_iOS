@@ -6,6 +6,7 @@ import {
   commentPreview,
   episodesLostOnShrink,
   formatAverage,
+  seasonRating,
   seriesRating,
   isEmptyEpisodeReview,
   normalizeReviewText,
@@ -87,9 +88,18 @@ function series(rating: Work["rating"], seasonRatings: (Season["rating"])[]): Wo
     rating,
     review: null,
     createdAt: "2026-09-26T00:00:00Z",
-    seasons: seasonRatings.map((r, i) => ({ ...season, id: `s${i}`, position: i + 1, rating: r })),
+    seasons: seasonRatings.map((r, i) => ({ ...season, id: `s${i}`, position: i + 1, rating: r, episodes: [] })),
   };
 }
+
+test("シーズン評価: 手動が無ければ評価済み各話の平均（基準42）", () => {
+  assert.deepEqual(seasonRating({ ...season, rating: null }), { kind: "average", value: 4.5 });
+  assert.deepEqual(seasonRating({ ...season, rating: null, episodes: [] }), { kind: "none" });
+});
+
+test("シーズン評価: 手動評価を各話平均より優先する（基準42）", () => {
+  assert.deepEqual(seasonRating({ ...season, rating: 3 }), { kind: "manual", rating: 3 });
+});
 
 test("作品全体の評価: 手動が無ければ評価の付いたシーズンの平均（小数第1位）", () => {
   assert.deepEqual(seriesRating(series(null, [5, 4])), { kind: "average", value: 4.5 });
@@ -105,6 +115,15 @@ test("作品全体の評価: 手動が無ければ評価の付いたシーズン
 
 test("作品全体の評価: 手動の評価があればそれを使う", () => {
   assert.deepEqual(seriesRating(series(2, [5, 5])), { kind: "manual", rating: 2 });
+});
+
+test("作品全体の評価: シーズンの各話平均もシーズン単位で数える（基準35・42）", () => {
+  const work = series(null, [4, null]);
+  work.seasons[1].episodes = [
+    { number: 1, rating: 5, comment: null, title: null },
+    { number: 2, rating: 4, comment: null, title: null },
+  ];
+  assert.deepEqual(seriesRating(work), { kind: "average", value: 4.3 });
 });
 
 test("平均は常に小数第1位まで出す", () => {

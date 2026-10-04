@@ -9,12 +9,13 @@ import { StarDisplay } from "@/components/common/StarRating";
 import { Header, Screen, SectionTitle, StateView } from "@/components/common/ui";
 import { EpisodeReviewSheet } from "@/components/works/EpisodeReviewSheet";
 import { ReviewSummary } from "@/components/works/ReviewSummary";
+import { SeasonRatingDisplay } from "@/components/works/SeasonRating";
 import { SeasonGate } from "@/components/works/WorkGate";
 import { color, radius, spacing, text } from "@/theme/tokens";
 
 /**
  * S シーズン詳細（受け入れ基準6・7・24・25・34）。
- * シーズン全体の評価と各話の評価は独立。シーズンの評価を各話から計算しない・平均も出さない
+ * シーズンの手動評価がなければ、評価済み各話の平均を表示する
  */
 export default function SeasonDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,6 +45,7 @@ function Detail({ work, season }: { work: Work; season: Season }) {
             <ReviewSummary
               status={season.status}
               rating={season.rating}
+              ratingDisplay={<SeasonRatingDisplay season={season} size={text.title} />}
               watchedOn={season.watchedOn}
               review={season.review}
               onEdit={() => router.push({ pathname: "/seasons/[id]/review", params: { id: season.id } })}

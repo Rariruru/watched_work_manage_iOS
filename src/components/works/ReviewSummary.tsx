@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { Rating, WatchStatus } from "@/domain/types";
 import { WATCH_STATUS_LABEL } from "@/domain/labels";
@@ -11,19 +12,20 @@ export function ReviewSummary(props: {
   rating: Rating | null;
   watchedOn: string | null;
   review: string | null;
+  ratingDisplay?: ReactNode;
   onEdit: () => void;
 }) {
   return (
     <View style={styles.box}>
       <View style={styles.row}>
-        <StarDisplay rating={props.rating} size={text.title} />
+        {props.ratingDisplay ?? <StarDisplay rating={props.rating} size={text.title} />}
         <Text style={styles.meta}>
           {WATCH_STATUS_LABEL[props.status]}
           {props.watchedOn ? ` · ${props.watchedOn}` : ""}
         </Text>
       </View>
       {props.review ? <Text style={styles.review}>{props.review}</Text> : <Text style={styles.empty}>感想はまだありません</Text>}
-      <Button label="感想を編集" variant="secondary" small onPress={props.onEdit} />
+      <Button label="感想・評価を編集" variant="secondary" small onPress={props.onEdit} />
     </View>
   );
 }

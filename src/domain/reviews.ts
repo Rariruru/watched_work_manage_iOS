@@ -69,10 +69,10 @@ export function isEmptyEpisodeReview(
 }
 
 // ---------------------------------------------------------------------------
-// アニメ・ドラマの作品全体の評価（2026-09-26 上田の決定。前は「作品全体の評価は持たない」だった）
+// シーズンとアニメ・ドラマ作品全体の表示評価
 // ---------------------------------------------------------------------------
 
-export type SeriesRating =
+export type DisplayRating =
   /** 手動で付けた評価（1〜5 の整数） */
   | { kind: "manual"; rating: Rating }
   /** 評価の付いたシーズンの平均。小数第1位まで（四捨五入） */
@@ -80,16 +80,33 @@ export type SeriesRating =
   /** 手動も無く、評価の付いたシーズンも無い */
   | { kind: "none" };
 
+export type SeriesRating = DisplayRating;
+
+function roundedAverage(values: readonly number[]): number {
+  const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+  return Math.round(average * 10) / 10;
+}
+
+/** シーズンの表示評価。手動評価がなければ、評価済み各話の平均を使う（基準42） */
+export function seasonRating(season: Season): DisplayRating {
+  if (season.rating !== null) return { kind: "manual", rating: season.rating };
+  const rated = season.episodes.map((episode) => episode.rating).filter((rating): rating is Rating => rating !== null);
+  if (rated.length === 0) return { kind: "none" };
+  return { kind: "average", value: roundedAverage(rated) };
+}
+
 /**
- * 作品全体の評価。手動の評価があればそれ、無ければ評価の付いたシーズンの平均。
- * 未評価のシーズンは平均に数えない。平均は保存せず、表示のたびに計算する
+ * 作品全体の評価。手動の評価があればそれ、無ければ表示評価のあるシーズンの平均。
+ * シーズンごとに同じ重みで数える。平均は保存せず、表示のたびに計算する
  */
 export function seriesRating(work: Work): SeriesRating {
   if (work.rating !== null) return { kind: "manual", rating: work.rating };
-  const rated = work.seasons.map((s) => s.rating).filter((r): r is Rating => r !== null);
+  const rated = work.seasons.flatMap((season) => {
+    const result = seasonRating(season);
+    return result.kind === "manual" ? [result.rating] : result.kind === "average" ? [result.value] : [];
+  });
   if (rated.length === 0) return { kind: "none" };
-  const avg = rated.reduce<number>((sum, r) => sum + r, 0) / rated.length;
-  return { kind: "average", value: Math.round(avg * 10) / 10 };
+  return { kind: "average", value: roundedAverage(rated) };
 }
 
 /** 平均の表示。常に小数第1位まで（4 → "4.0"） */
