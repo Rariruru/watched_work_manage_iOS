@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
 import { WATCH_STATUS_LABEL, WORK_TYPE_LABEL } from "@/domain/labels";
 import type { ListRow } from "@/domain/works";
 import type { Rating } from "@/domain/types";
@@ -19,7 +20,11 @@ export function WorkListRow({ row, onPress, recordCount }: { row: ListRow; onPre
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
     >
-      <View style={styles.thumb} />
+      {row.work.coverUrl ? (
+        <Image source={row.work.coverUrl} style={styles.thumb} contentFit="cover" accessibilityLabel={`${row.work.title}の画像`} />
+      ) : (
+        <View style={styles.thumb} />
+      )}
       <View style={styles.copy}>
         <Text style={styles.title} numberOfLines={2}>
           {title}

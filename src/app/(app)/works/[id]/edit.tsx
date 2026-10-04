@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { changeWorkType, deleteWork, updateWork } from "@/api/works";
+import { changeWorkType, coverDraftFromWork, deleteWork, syncWorkCover, updateWork } from "@/api/works";
+import type { WorkCoverDraft } from "@/api/works";
 import { useWorks } from "@/api/queries";
 import { useSave } from "@/api/useSave";
 import type { Work, WorkType } from "@/domain/types";
@@ -11,6 +12,7 @@ import { useDialog } from "@/components/common/dialog";
 import { Banner, Button, Field, Header, Input, Screen, Segmented } from "@/components/common/ui";
 import { WorkGate } from "@/components/works/WorkGate";
 import { WORK_TYPE_OPTIONS } from "@/components/works/options";
+import { WorkCoverPicker } from "@/components/works/WorkCoverPicker";
 import { spacing } from "@/theme/tokens";
 
 /** 作品の編集・削除（受け入れ基準11・17・31・32） */
@@ -27,6 +29,7 @@ function Form({ work }: { work: Work }) {
 
   const [title, setTitle] = useState(work.title);
   const [type, setType] = useState<WorkType>(work.type);
+  const [cover, setCover] = useState<WorkCoverDraft | null>(() => coverDraftFromWork(work));
   const [titleError, setTitleError] = useState<string | null>(null);
 
   // 映画の視聴状態は「感想を編集」で変える（変える場所を1か所にする）
@@ -63,6 +66,7 @@ function Form({ work }: { work: Work }) {
         // ⚠️ 種別の変更（シーズンの作成・削除）は DB の change_work_type が1トランザクションで行う
         if (effect !== "none") await changeWorkType(work.id, type);
         if (titleChanged) await updateWork(work.id, { title: normalizeTitle(title) });
+        await syncWorkCover(work.id, work.coverPath, cover);
       },
       "保存しました",
       "作品を保存できませんでした"
@@ -95,6 +99,9 @@ function Form({ work }: { work: Work }) {
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <Field label="タイトル（必須）" error={titleError}>
             <Input value={title} onChangeText={setTitle} invalid={!!titleError} />
+          </Field>
+          <Field label="作品画像（任意・10MB以下）">
+            <WorkCoverPicker cover={cover} onChange={setCover} disabled={saving} />
           </Field>
           <Field label="種別">
             <Segmented options={WORK_TYPE_OPTIONS} value={type} onChange={setType} />

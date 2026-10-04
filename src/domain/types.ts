@@ -68,6 +68,10 @@ export type Work = {
   id: string;
   title: string;
   type: WorkType;
+  /** 非公開Storageの作品画像パス。画像なしは null */
+  coverPath: string | null;
+  /** 期限付きの表示URL。作成できなかったときと画像なしは null */
+  coverUrl: string | null;
   /** 映画のときだけ値がある。アニメ・ドラマはシーズンに持つ */
   status: WatchStatus | null;
   watchedOn: string | null;

@@ -1,5 +1,5 @@
 // @ts-nocheck
-// アカウント削除: Storageの写真を先に消し、成功したときだけauth.usersを削除する。
+// アカウント削除: Storageの記録写真・作品画像を先に消し、成功したときだけauth.usersを削除する。
 // デプロイは人間が行う。SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY はFunctionsの標準環境変数。
 // eslint-disable-next-line import/no-unresolved
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -16,14 +16,31 @@ function response(status: number, body: unknown) {
   });
 }
 
-async function listFolder(storage: ReturnType<typeof createClient>["storage"], path: string) {
+async function listFolder(storage: ReturnType<typeof createClient>["storage"], bucket: string, path: string) {
   const all = [];
   for (let offset = 0; ; offset += 100) {
-    const { data, error } = await storage.from("record-photos").list(path, { limit: 100, offset });
+    const { data, error } = await storage.from(bucket).list(path, { limit: 100, offset });
     if (error) throw error;
     all.push(...(data ?? []));
     if (!data || data.length < 100) return all;
   }
+}
+
+async function removeUserFiles(
+  storage: ReturnType<typeof createClient>["storage"],
+  bucket: string,
+  userId: string
+) {
+  const folders = await listFolder(storage, bucket, userId);
+  const paths = [];
+  for (const folder of folders) {
+    const prefix = `${userId}/${folder.name}`;
+    const files = await listFolder(storage, bucket, prefix);
+    for (const file of files) paths.push(`${prefix}/${file.name}`);
+  }
+  if (paths.length === 0) return;
+  const { error } = await storage.from(bucket).remove(paths);
+  if (error) throw error;
 }
 
 Deno.serve(async (request) => {
@@ -44,17 +61,8 @@ Deno.serve(async (request) => {
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
   try {
-    const folders = await listFolder(admin.storage, userData.user.id);
-    const paths = [];
-    for (const folder of folders) {
-      const prefix = `${userData.user.id}/${folder.name}`;
-      const files = await listFolder(admin.storage, prefix);
-      for (const file of files) paths.push(`${prefix}/${file.name}`);
-    }
-    if (paths.length > 0) {
-      const { error } = await admin.storage.from("record-photos").remove(paths);
-      if (error) throw error;
-    }
+    await removeUserFiles(admin.storage, "record-photos", userData.user.id);
+    await removeUserFiles(admin.storage, "work-covers", userData.user.id);
 
     const { error: deleteError } = await admin.auth.admin.deleteUser(userData.user.id);
     if (deleteError) throw deleteError;

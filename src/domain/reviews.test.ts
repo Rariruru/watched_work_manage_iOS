@@ -80,6 +80,8 @@ function series(rating: Work["rating"], seasonRatings: (Season["rating"])[]): Wo
     id: "w1",
     title: "進撃の巨人",
     type: "anime",
+    coverPath: null,
+    coverUrl: null,
     status: null,
     watchedOn: null,
     rating,

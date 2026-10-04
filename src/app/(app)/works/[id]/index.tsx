@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Image } from "expo-image";
 import { useRecords } from "@/api/queries";
 import { toAppError } from "@/api/errors";
 import { RECORD_KIND_LABEL, WATCH_STATUS_LABEL, WORK_TYPE_LABEL } from "@/domain/labels";
@@ -32,7 +33,11 @@ function Detail({ work }: { work: Work }) {
       />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}>
-          <View style={styles.thumb} />
+          {work.coverUrl ? (
+            <Image source={work.coverUrl} style={styles.thumb} contentFit="cover" accessibilityLabel={`${work.title}の画像`} />
+          ) : (
+            <View style={styles.thumb} />
+          )}
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={styles.title}>{work.title}</Text>
             <Text style={styles.sub}>

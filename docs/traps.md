@@ -70,7 +70,7 @@
 
 ## ⚠️ 写真のDB行を消してもStorage実体は消えない（出典: 本プロジェクト 2026-09-27）
 - PostgreSQLの外部キー連鎖は `record_photos` の行には効くが、Storageオブジェクトには効かない
-- 記録削除ではアプリがオブジェクトを削除し、アカウント削除ではservice roleを持つ `delete-account` Edge Functionが本人フォルダを削除してからAuthユーザーを削除する
+- 記録・作品削除ではアプリが対応するオブジェクトを削除し、アカウント削除ではservice roleを持つ `delete-account` Edge Functionが `record-photos` と `work-covers` の本人フォルダを削除してからAuthユーザーを削除する
 - Edge Functionをデプロイせずにアプリだけ更新すると、アカウント削除に失敗する。DBマイグレーションと関数を先に反映する
 
 ## ⚠️ 審査は「辿り着けるか」で落ちる（出典: next-project §10）

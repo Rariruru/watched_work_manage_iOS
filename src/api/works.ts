@@ -1,7 +1,9 @@
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { supabase } from "./supabase";
 import { AppError, toAppError } from "./errors";
 import type { EpisodeReview, Rating, Season, WatchStatus, Work, WorkType } from "@/domain/types";
 import { toRating } from "@/domain/reviews";
+import { MAX_PHOTO_EDGE } from "@/domain/records";
 
 /**
  * 作品・シーズンの読み書き。画面はここを通して Supabase を触る（.from() を画面に書かない）。
@@ -10,6 +12,18 @@ import { toRating } from "@/domain/reviews";
 
 type EpisodeRow = { number: number; rating: number | null; comment: string | null; title: string | null };
 type WorkRecordPhotoRow = { record_photos: { storage_path: string }[] | null };
+type WorkCoverRow = { cover_path: string | null };
+
+const COVER_BUCKET = "work-covers";
+
+export type WorkCoverDraft = {
+  previewUri: string;
+  localUri: string | null;
+  storagePath: string | null;
+  width: number;
+  height: number;
+  fileSize: number | null;
+};
 
 type SeasonRow = {
   id: string;
@@ -32,6 +46,7 @@ type WorkRow = {
   watched_on: string | null;
   rating: number | null;
   review: string | null;
+  cover_path: string | null;
   created_at: string;
   seasons: SeasonRow[] | null;
 };
@@ -39,7 +54,7 @@ type WorkRow = {
 // ⚠️ rating / review / episodes は 20260926010000_reviews_and_episodes.sql、episodes.title は 20260926020000_… で足した列・表。
 //    適用前だと一覧の取得ごと失敗する。そのときは errors.ts が「データベースの更新が適用されていません」を出す
 const WORK_SELECT =
-  "id, title, type, status, watched_on, rating, review, created_at, " +
+  "id, title, type, status, watched_on, rating, review, cover_path, created_at, " +
   "seasons(id, work_id, name, position, episode_count, status, watched_on, rating, review, episodes(number, rating, comment, title))";
 
 function toEpisode(row: EpisodeRow): EpisodeReview {
@@ -61,7 +76,17 @@ function toSeason(row: SeasonRow): Season {
   };
 }
 
-function toWork(row: WorkRow): Work {
+async function signedCoverUrl(path: string | null): Promise<string | null> {
+  if (!path) return null;
+  const { data, error } = await supabase.storage.from(COVER_BUCKET).createSignedUrl(path, 60 * 60);
+  if (error || !data?.signedUrl) {
+    console.warn("[works] 作品画像のURLを作れなかった", path, error);
+    return null;
+  }
+  return data.signedUrl;
+}
+
+async function toWork(row: WorkRow): Promise<Work> {
   if (!Array.isArray(row.seasons)) {
     // ⚠️ 期待しない形。0件に倒すとシーズンが消えたように見えるので、残して警告だけ出す
     console.warn("[works] seasons が配列ではない", row.id, row.seasons);
@@ -70,6 +95,8 @@ function toWork(row: WorkRow): Work {
     id: row.id,
     title: row.title,
     type: row.type,
+    coverPath: row.cover_path,
+    coverUrl: await signedCoverUrl(row.cover_path),
     status: row.status,
     watchedOn: row.watched_on,
     rating: toRating(row.rating),
@@ -100,7 +127,7 @@ export async function fetchWorks(): Promise<Work[]> {
     console.warn("[works] 一覧の応答が配列ではない", data);
     throw new AppError("invalid-response", "作品を読み込めませんでした");
   }
-  return (data as unknown as WorkRow[]).map(toWork);
+  return Promise.all((data as unknown as WorkRow[]).map(toWork));
 }
 
 export async function createWork(input: {
@@ -108,6 +135,7 @@ export async function createWork(input: {
   type: WorkType;
   status: WatchStatus;
   episodeCount: number;
+  cover: WorkCoverDraft | null;
 }): Promise<string> {
   const id = await run("作品を保存できませんでした", () =>
     supabase.rpc("create_work", {
@@ -120,6 +148,16 @@ export async function createWork(input: {
   if (typeof id !== "string") {
     console.warn("[works] create_work が id を返さなかった", id);
     throw new AppError("invalid-response", "作品を保存できませんでした");
+  }
+  if (input.cover) {
+    try {
+      await syncWorkCover(id, null, input.cover);
+    } catch (error) {
+      await deleteWork(id).catch((rollbackError) =>
+        console.warn("[works] 作品画像の失敗後に作品を戻せなかった", id, rollbackError)
+      );
+      throw error;
+    }
   }
   return id;
 }
@@ -142,9 +180,15 @@ export async function changeWorkType(id: string, type: WorkType): Promise<void> 
 
 export async function deleteWork(id: string): Promise<void> {
   // DBの連鎖削除ではStorage実体は消えないため、削除前にパスだけ控える。
-  const photoRows = await run("作品の写真を確認できませんでした", () =>
-    supabase.from("records").select("record_photos(storage_path)").eq("work_id", id)
-  );
+  const [workRow, photoRows] = await Promise.all([
+    run("作品画像を確認できませんでした", () =>
+      supabase.from("works").select("cover_path").eq("id", id).maybeSingle()
+    ),
+    run("作品の写真を確認できませんでした", () =>
+      supabase.from("records").select("record_photos(storage_path)").eq("work_id", id)
+    ),
+  ]);
+  const coverPath = (workRow as unknown as WorkCoverRow | null)?.cover_path ?? null;
   const photoPaths = ((photoRows ?? []) as unknown as WorkRecordPhotoRow[]).flatMap((record) =>
     (record.record_photos ?? []).map((photo) => photo.storage_path)
   );
@@ -154,6 +198,93 @@ export async function deleteWork(id: string): Promise<void> {
     // DB削除は完了済み。成功通知を誤って失敗へ戻さず、運用で追えるよう警告を残す。
     if (error) console.warn("[works] 削除済み作品の写真をStorageから削除できなかった", photoPaths, error);
   }
+  if (coverPath) {
+    const { error } = await supabase.storage.from(COVER_BUCKET).remove([coverPath]);
+    if (error) console.warn("[works] 削除済み作品の画像をStorageから削除できなかった", coverPath, error);
+  }
+}
+
+async function currentUserId(): Promise<string> {
+  let response: Awaited<ReturnType<typeof supabase.auth.getUser>>;
+  try {
+    response = await supabase.auth.getUser();
+  } catch (error) {
+    throw toAppError(error, "サインイン情報を確認できませんでした");
+  }
+  if (response.error) throw toAppError(response.error, "サインイン情報を確認できませんでした");
+  const id = response.data.user?.id;
+  if (typeof id !== "string") throw new AppError("invalid-response", "サインイン情報を確認できませんでした");
+  return id;
+}
+
+function coverResizeAction(cover: WorkCoverDraft) {
+  const longest = Math.max(cover.width, cover.height);
+  if (longest <= MAX_PHOTO_EDGE) return [];
+  return cover.width >= cover.height
+    ? [{ resize: { width: MAX_PHOTO_EDGE } }]
+    : [{ resize: { height: MAX_PHOTO_EDGE } }];
+}
+
+async function uploadCover(workId: string, cover: WorkCoverDraft): Promise<string> {
+  if (!cover.localUri) {
+    if (cover.storagePath) return cover.storagePath;
+    throw new AppError("invalid-response", "作品画像を読み込めませんでした");
+  }
+  const userId = await currentUserId();
+  const rendered = await manipulateAsync(cover.localUri, coverResizeAction(cover), {
+    compress: 0.85,
+    format: SaveFormat.JPEG,
+    base64: false,
+  });
+  const bytes = await fetch(rendered.uri).then((response) => response.arrayBuffer());
+  const path = `${userId}/${workId}/cover.jpg`;
+  const { error } = await supabase.storage.from(COVER_BUCKET).upload(path, bytes, {
+    contentType: "image/jpeg",
+    cacheControl: "0",
+    upsert: true,
+  });
+  if (error) throw toAppError(error, "作品画像をアップロードできませんでした");
+  return path;
+}
+
+export async function syncWorkCover(
+  workId: string,
+  previousPath: string | null,
+  cover: WorkCoverDraft | null
+): Promise<void> {
+  if (cover?.localUri) {
+    const path = await uploadCover(workId, cover);
+    if (previousPath === path) return;
+    try {
+      await run("作品画像を保存できませんでした", () =>
+        supabase.from("works").update({ cover_path: path }).eq("id", workId)
+      );
+    } catch (error) {
+      await supabase.storage.from(COVER_BUCKET).remove([path]);
+      throw error;
+    }
+    return;
+  }
+
+  if (cover?.storagePath === previousPath) return;
+  if (!previousPath) return;
+  await run("作品画像を外せませんでした", () =>
+    supabase.from("works").update({ cover_path: null }).eq("id", workId)
+  );
+  const { error } = await supabase.storage.from(COVER_BUCKET).remove([previousPath]);
+  if (error) console.warn("[works] 外した作品画像をStorageから削除できなかった", previousPath, error);
+}
+
+export function coverDraftFromWork(work: Work): WorkCoverDraft | null {
+  if (!work.coverPath) return null;
+  return {
+    previewUri: work.coverUrl ?? "",
+    localUri: null,
+    storagePath: work.coverPath,
+    width: 0,
+    height: 0,
+    fileSize: null,
+  };
 }
 
 export async function addSeason(input: {

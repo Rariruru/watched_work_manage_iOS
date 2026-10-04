@@ -32,13 +32,13 @@ npm install
 1. https://supabase.com でプロジェクトを作る
 2. SQL Editor で `supabase/migrations/` の SQL をファイル名の順に実行する
 3. Project Settings > API から Project URL と anon key を控える（service_role key はアプリに入れない）
-4. `supabase/functions/delete-account` をデプロイする。アカウント削除時に非公開Storageの写真を先に削除するために必要
+4. `supabase/functions/delete-account` をデプロイする。アカウント削除時に非公開Storageの写真と作品画像を先に削除するために必要
 
 ```bash
 supabase functions deploy delete-account
 ```
 
-`20260927000000_records_and_photos.sql` は非公開の `record-photos` バケットも作る。本番へSQLとFunctionを適用するのは人間が行う。
+`20260927000000_records_and_photos.sql` は非公開の `record-photos` バケット、`20261004000000_work_cover_images.sql` は非公開の `work-covers` バケットを作る。本番へSQLとFunctionを適用するのは人間が行う。作品画像対応後は、最新の `delete-account` Functionも再デプロイする。
 
 ### 3. 接続先を設定する
 

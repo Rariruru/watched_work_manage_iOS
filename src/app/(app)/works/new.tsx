@@ -2,6 +2,7 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { createWork } from "@/api/works";
+import type { WorkCoverDraft } from "@/api/works";
 import { useWorks } from "@/api/queries";
 import { useSave } from "@/api/useSave";
 import { DEFAULT_WATCH_STATUS } from "@/domain/types";
@@ -11,6 +12,7 @@ import { findDuplicate, hasSeasons, parseEpisodeCount, validateTitle } from "@/d
 import { useDialog } from "@/components/common/dialog";
 import { Banner, Field, Header, Input, Screen, Segmented } from "@/components/common/ui";
 import { WATCH_STATUS_OPTIONS, WORK_TYPE_OPTIONS } from "@/components/works/options";
+import { WorkCoverPicker } from "@/components/works/WorkCoverPicker";
 import { spacing } from "@/theme/tokens";
 
 /** C 作品の追加（受け入れ基準4・5・18・23） */
@@ -25,6 +27,7 @@ export default function NewWork() {
   const [type, setType] = useState<WorkType>("anime");
   const [status, setStatus] = useState<WatchStatus>(DEFAULT_WATCH_STATUS);
   const [episodes, setEpisodes] = useState("");
+  const [cover, setCover] = useState<WorkCoverDraft | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [episodesError, setEpisodesError] = useState<string | null>(null);
 
@@ -51,7 +54,13 @@ export default function NewWork() {
     let createdId: string | null = null;
     const ok = await run(
       async () => {
-        createdId = await createWork({ title, type, status, episodeCount: hasSeasons(type) ? (count ?? 0) : 0 });
+        createdId = await createWork({
+          title,
+          type,
+          status,
+          episodeCount: hasSeasons(type) ? (count ?? 0) : 0,
+          cover,
+        });
       },
       "保存しました",
       "作品を保存できませんでした"
@@ -76,6 +85,9 @@ export default function NewWork() {
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <Field label="タイトル（必須）" error={titleError}>
             <Input value={title} onChangeText={setTitle} placeholder="例: 進撃の巨人" invalid={!!titleError} autoFocus />
+          </Field>
+          <Field label="作品画像（任意・10MB以下）">
+            <WorkCoverPicker cover={cover} onChange={setCover} disabled={saving} />
           </Field>
           <Field label="種別">
             <Segmented options={WORK_TYPE_OPTIONS} value={type} onChange={setType} />
